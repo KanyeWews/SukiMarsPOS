@@ -1,0 +1,87 @@
+<Page x:Class="SukiMars.Views.ReportsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="ReportsPage"
+      Background="#FFF3F4F6">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#c2f7c8" CornerRadius="12" Padding="16" Margin="0,0,0,14">
+            <DockPanel>
+                <TextBlock Text="SukiMars Cart - Reports" FontWeight="Bold" FontSize="22" Foreground="Black" DockPanel.Dock="Left" />
+            </DockPanel>
+        </Border>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="Reports" Margin="0,0,8,0" Padding="14,6" />
+        </StackPanel>
+
+        <UniformGrid Grid.Row="2" Rows="1" Columns="4" Margin="0,0,0,10">
+            <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Total Sales"/>
+                    <TextBlock Text="0.00" FontSize="24" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+            <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Transactions this Month"/>
+                    <TextBlock Text="0" FontSize="24" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+            <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Avg. per Transaction"/>
+                    <TextBlock Text="0.00" FontSize="24" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+            <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Top Product"/>
+                    <TextBlock Text="-" FontSize="24" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.4*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+
+            <DataGrid x:Name="ReportGrid" Grid.Column="0" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Margin="0,0,10,0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Product Name" Binding="{Binding Col1}" Width="*" />
+                    <DataGridTextColumn Header="Category" Binding="{Binding Col2}" Width="*" />
+                    <DataGridTextColumn Header="Price" Binding="{Binding Col3}" Width="*" />
+                    <DataGridTextColumn Header="Stock" Binding="{Binding Col4}" Width="*" />
+                    <DataGridTextColumn Header="Status" Binding="{Binding Col5}" Width="*" />
+                    <DataGridTextColumn Header="Actions" Binding="{Binding Col6}" Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="Today" FontWeight="SemiBold" FontSize="16" />
+                    <Rectangle Height="2" Fill="#E5E7EB" Margin="0,8,0,12" />
+                    <TextBlock Text="Daily Sales (bind from database later)"
+                               FontSize="13"
+                               Foreground="#6B7280"
+                               Margin="0,0,0,10" />
+                    <Border Background="#c2f7c8" Height="180" CornerRadius="8">
+                        <TextBlock Text="Chart Placeholder"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="Black"
+                                   FontWeight="Bold" />
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

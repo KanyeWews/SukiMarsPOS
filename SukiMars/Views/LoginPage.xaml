@@ -1,0 +1,95 @@
+<Page x:Class="SukiMars.Views.LoginPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="LoginPage"
+      Background="#FFF8FAFC">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.1*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="#c2f7c8">
+            <StackPanel VerticalAlignment="Center" Margin="64">
+                <Image Source="file:///C:/Users/zulea/.cursor/projects/C-Users-zulea-AppData-Local-Temp-590f3eb9-56a6-4f56-945c-11be47c33920/assets/c__Users_zulea_AppData_Roaming_Cursor_User_workspaceStorage_1777426078862_images_image-c0abb9e3-0bcc-4c90-926a-d06f4e89f90e.png"
+                       Width="280"
+                       Stretch="Uniform"
+                       Margin="0,0,0,20" />
+                <TextBlock Text="SukiMars Cart"
+                           FontSize="54"
+                           FontWeight="Bold"
+                           Foreground="Black" />
+                <TextBlock Text="Presyong Suki, Alagang Mars"
+                           Margin="0,12,0,0"
+                           FontSize="24"
+                           Foreground="Black" Width="306" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Column="1">
+            <Border Width="430"
+                    Padding="34"
+                    Background="White"
+                    CornerRadius="18"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Log in"
+                               FontSize="34"
+                               FontWeight="Bold"
+                               Foreground="#111827"
+                               Margin="0,0,0,24" />
+
+                    <TextBlock Text="Username" FontWeight="SemiBold" />
+                    <TextBox x:Name="UsernameTextBox"
+                             Height="42"
+                             Margin="0,8,0,18"
+                             VerticalContentAlignment="Center"
+                             FontSize="12"
+                             Text="Enter Username"
+                             Foreground="Gray"
+                             GotFocus="Username_GotFocus"
+                             LostFocus="Username_LostFocus" />
+
+                    <TextBlock Text="Password" FontWeight="SemiBold" />
+                    <Grid Margin="0,8,0,24" Height="42">
+                        <PasswordBox x:Name="PasswordInput"
+                                     VerticalContentAlignment="Center"
+                                     FontSize="14"
+                                     PasswordChanged="PasswordInput_PasswordChanged"
+                                     GotFocus="PasswordInput_GotFocus"
+                                     LostFocus="PasswordInput_LostFocus" />
+
+                        <TextBlock x:Name="PasswordPlaceholder"
+                                   Text="Enter Password"
+                                   Foreground="Gray"
+                                   VerticalAlignment="Center"
+                                   Margin="4,0,0,0"
+                                   FontSize="12"
+                                   IsHitTestVisible="False" />
+                    </Grid>
+
+                    <Button Content="Sign in"
+                            Height="44"
+                            FontSize="15"
+                            FontWeight="SemiBold"
+                            Foreground="White"
+                            Background="#004524"
+                            BorderBrush="#004524"
+                            Click="SignIn_Click" />
+
+                    <!-- Login message shown here -->
+                    <TextBlock x:Name="LoginMessageText"
+                               Margin="0,12,0,0"
+                               Foreground="#B91C1C"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+
+                    
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

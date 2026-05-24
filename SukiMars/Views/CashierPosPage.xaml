@@ -1,0 +1,114 @@
+<Page x:Class="SukiMars.Views.CashierPosPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="CashierPosPage"
+      Background="#FFF3F4F6">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="1.1*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Background="#c2f7c8" CornerRadius="12" Padding="16" Margin="0,0,0,14">
+            <DockPanel>
+                <TextBlock Text="SukiMars Cart - Cashier"
+                           FontWeight="Bold"
+                           FontSize="22"
+                           Foreground="Black"
+                           DockPanel.Dock="Left" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" />
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="0" Background="White" CornerRadius="12" Padding="16" Margin="0,0,12,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBox x:Name="SearchBox"
+                         Height="40"
+                         FontSize="12"
+                         VerticalContentAlignment="Center"
+                         ToolTip="Search by product name or SKU"
+                         Text="Search product..."
+                         Foreground="Gray"
+                         GotFocus="SearchBox_GotFocus"
+                         LostFocus="SearchBox_LostFocus" />
+
+                <UniformGrid Grid.Row="1" Columns="4" Margin="0,12,0,12">
+                    <Button Content="All" Tag="All" Click="Category_Click" />
+                    <Button Content="Beverages" Tag="Beverages" Click="Category_Click" />
+                    <Button Content="Canned Goods" Tag="Canned Goods" Click="Category_Click" />
+                    <Button Content="Dairy" Tag="Dairy" Click="Category_Click" />
+                </UniformGrid>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Qty:" VerticalAlignment="Center" />
+                    <TextBox x:Name="QuantityInput" Width="70" Margin="8,0,0,0" Text="1" VerticalContentAlignment="Center" />
+                    <Button Content="Add Selected To Cart" Margin="10,0,0,0" Click="AddToCart_Click" />
+                    <Button Content="Search" Margin="10,0,0,0" Click="Search_Click" />
+                </StackPanel>
+
+                <DataGrid x:Name="ProductsGrid"
+                          Grid.Row="3"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Product" Binding="{Binding ItemName}" Width="2*" />
+                        <DataGridTextColumn Header="Code" Binding="{Binding ItemCode}" Width="*" />
+                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="*" />
+                        <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="1" Background="White" CornerRadius="12" Padding="16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Current Transaction" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" />
+                <ListView x:Name="TransactionItemsList" Grid.Row="1">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Item" DisplayMemberBinding="{Binding ItemName}" Width="120" />
+                            <GridViewColumn Header="Qty" DisplayMemberBinding="{Binding Quantity}" Width="45" />
+                            <GridViewColumn Header="Price" DisplayMemberBinding="{Binding UnitPrice}" Width="80" />
+                            <GridViewColumn Header="Line Total" DisplayMemberBinding="{Binding LineTotal}" Width="90" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                <StackPanel Grid.Row="2" Margin="0,12,0,0">
+                    <TextBlock x:Name="SubtotalText" Text="Subtotal: 0.00" FontWeight="SemiBold" />
+                    <TextBlock x:Name="TotalText" Text="Total: 0.00" FontSize="20" FontWeight="Bold" Margin="0,6,0,12" />
+                    <Button Content="Process payment"
+                            Height="40"
+                            Margin="0,0,0,8"
+                            Foreground="White"
+                            Background="#059669"
+                            BorderBrush="#059669"
+                            Click="ProcessPayment_Click" />
+                    <Button Content="Clear cart"
+                            Height="40"
+                            Foreground="White"
+                            Background="#DC2626"
+                            BorderBrush="#DC2626"
+                            Click="ClearCart_Click" />
+                    <TextBlock x:Name="PosMessageText" Margin="0,8,0,0" Foreground="#B91C1C" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>
