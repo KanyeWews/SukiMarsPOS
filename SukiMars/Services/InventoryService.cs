@@ -11,6 +11,8 @@ public sealed class InventoryService
                 mi.itemID,
                 mi.itemName,
                 mi.itemCode,
+                ISNULL(mi.barcode, '') AS barcode,
+                ISNULL(mi.itemDescription, '') AS itemDescription,
                 mi.itemCategory,
                 mi.price,
                 ISNULL(s.currentQty, 0) AS currentQty,
@@ -26,7 +28,7 @@ public sealed class InventoryService
                 ) AS soldLast30Days
             FROM dbo.mart_items mi
             LEFT JOIN dbo.stock s ON s.itemID = mi.itemID
-            WHERE (@search IS NULL OR @search = '' OR mi.itemName LIKE '%' + @search + '%' OR mi.itemCode LIKE '%' + @search + '%')
+            WHERE (@search IS NULL OR @search = '' OR mi.itemName LIKE '%' + @search + '%' OR mi.itemCode LIKE '%' + @search + '%' OR mi.barcode LIKE '%' + @search + '%')
             ORDER BY mi.itemName ASC
             """;
 
@@ -43,10 +45,12 @@ public sealed class InventoryService
             int itemId = reader.GetInt32(0);
             string itemName = reader.GetString(1);
             string itemCode = reader.GetString(2);
-            string itemCategory = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
-            decimal price = reader.GetDecimal(4);
-            int currentQty = reader.IsDBNull(5) ? 0 : reader.GetInt32(5);
-            int soldLast30Days = reader.IsDBNull(6) ? 0 : reader.GetInt32(6);
+            string barcode = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+            string itemDescription = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+            string itemCategory = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
+            decimal price = reader.GetDecimal(6);
+            int currentQty = reader.IsDBNull(7) ? 0 : reader.GetInt32(7);
+            int soldLast30Days = reader.IsDBNull(8) ? 0 : reader.GetInt32(8);
 
             // Calculate average daily usage over 30 days
             decimal avgDailyUsage = soldLast30Days / 30.0m;
@@ -80,6 +84,8 @@ public sealed class InventoryService
                 ItemId = itemId,
                 ItemName = itemName,
                 ItemCode = itemCode,
+                Barcode = barcode,
+                ItemDescription = itemDescription,
                 ItemCategory = itemCategory,
                 Price = price,
                 CurrentQty = currentQty,
@@ -122,7 +128,7 @@ public sealed class InventoryService
         };
     }
 
-    public async Task AddProductAsync(string itemName, string itemCode, string category, decimal price, int initialQty)
+    public async Task AddProductAsync(string itemName, string itemCode, string category, decimal price, int initialQty, string? barcode = null)
     {
         await using SqlConnection connection = new(DatabaseConfig.ConnectionString);
         await connection.OpenAsync();
@@ -131,14 +137,15 @@ public sealed class InventoryService
         try
         {
             const string addItemSql = """
-                INSERT INTO dbo.mart_items (itemName, itemCode, itemCategory, itemDescription, price)
-                VALUES (@name, @code, @category, '', @price);
+                INSERT INTO dbo.mart_items (itemName, itemCode, barcode, itemCategory, itemDescription, price)
+                VALUES (@name, @code, @barcode, @category, '', @price);
                 SELECT CAST(SCOPE_IDENTITY() AS INT);
                 """;
 
             await using SqlCommand addItem = new(addItemSql, connection, transaction);
             addItem.Parameters.AddWithValue("@name", itemName);
             addItem.Parameters.AddWithValue("@code", itemCode);
+            addItem.Parameters.AddWithValue("@barcode", string.IsNullOrWhiteSpace(barcode) ? DBNull.Value : barcode);
             addItem.Parameters.AddWithValue("@category", category);
             addItem.Parameters.AddWithValue("@price", price);
             int itemId = (int)(await addItem.ExecuteScalarAsync() ?? 0);
@@ -162,7 +169,7 @@ public sealed class InventoryService
         }
     }
 
-    public async Task UpdateProductAsync(int itemId, string itemName, string itemCode, string category, decimal price, int qty)
+    public async Task UpdateProductAsync(int itemId, string itemName, string itemCode, string category, decimal price, int qty, string? barcode = null)
     {
         await using SqlConnection connection = new(DatabaseConfig.ConnectionString);
         await connection.OpenAsync();
@@ -174,6 +181,7 @@ public sealed class InventoryService
                 UPDATE dbo.mart_items
                 SET itemName = @name,
                     itemCode = @code,
+                    barcode = @barcode,
                     itemCategory = @category,
                     price = @price
                 WHERE itemID = @itemId
@@ -182,6 +190,7 @@ public sealed class InventoryService
             await using SqlCommand updateItem = new(updateItemSql, connection, transaction);
             updateItem.Parameters.AddWithValue("@name", itemName);
             updateItem.Parameters.AddWithValue("@code", itemCode);
+            updateItem.Parameters.AddWithValue("@barcode", string.IsNullOrWhiteSpace(barcode) ? DBNull.Value : barcode);
             updateItem.Parameters.AddWithValue("@category", category);
             updateItem.Parameters.AddWithValue("@price", price);
             updateItem.Parameters.AddWithValue("@itemId", itemId);
@@ -210,6 +219,18 @@ public sealed class InventoryService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task UpdateDescriptionAsync(int itemId, string description)
+    {
+        const string sql = "UPDATE dbo.mart_items SET itemDescription = @desc WHERE itemID = @itemId";
+
+        await using SqlConnection connection = new(DatabaseConfig.ConnectionString);
+        await connection.OpenAsync();
+        await using SqlCommand cmd = new(sql, connection);
+        cmd.Parameters.AddWithValue("@desc", description ?? string.Empty);
+        cmd.Parameters.AddWithValue("@itemId", itemId);
+        await cmd.ExecuteNonQueryAsync();
     }
 
     public async Task DeleteProductAsync(int itemId)
@@ -271,6 +292,8 @@ public sealed class InventoryProduct
     public int ItemId { get; init; }
     public string ItemName { get; init; } = string.Empty;
     public string ItemCode { get; init; } = string.Empty;
+    public string Barcode { get; init; } = string.Empty;
+    public string ItemDescription { get; init; } = string.Empty;
     public string ItemCategory { get; init; } = string.Empty;
     public decimal Price { get; init; }
     public int CurrentQty { get; init; }

@@ -79,14 +79,14 @@ namespace SukiMars.Views
 
         private async void Add_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetInputs(out string itemName, out string itemCode, out string category, out decimal price, out int qty))
+            if (!TryGetInputs(out string itemName, out string itemCode, out string barcode, out string category, out decimal price, out int qty))
             {
                 return;
             }
 
             try
             {
-                await _inventoryService.AddProductAsync(itemName, itemCode, category, price, 0);
+                await _inventoryService.AddProductAsync(itemName, itemCode, category, price, 0, barcode);
                 InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkGreen;
                 InventoryMessageText.Text = "Product added.";
                 ClearInputs();
@@ -107,7 +107,7 @@ namespace SukiMars.Views
                 return;
             }
 
-            if (!TryGetInputs(out string itemName, out string itemCode, out string category, out decimal price, out int qty))
+            if (!TryGetInputs(out string itemName, out string itemCode, out string barcode, out string category, out decimal price, out int qty))
             {
                 return;
             }
@@ -115,7 +115,7 @@ namespace SukiMars.Views
             try
             {
                 int qtyToPreserve = _selectedProduct.CurrentQty;
-                await _inventoryService.UpdateProductAsync(_selectedProduct.ItemId, itemName, itemCode, category, price, qtyToPreserve);
+                await _inventoryService.UpdateProductAsync(_selectedProduct.ItemId, itemName, itemCode, category, price, qtyToPreserve, barcode);
                 InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkGreen;
                 InventoryMessageText.Text = "Product updated.";
                 await LoadDataAsync();
@@ -161,14 +161,16 @@ namespace SukiMars.Views
 
             NameInput.Text = _selectedProduct.ItemName;
             CodeInput.Text = _selectedProduct.ItemCode;
+            BarcodeInput.Text = _selectedProduct.Barcode;
             CategoryInput.Text = _selectedProduct.ItemCategory;
             PriceInput.Text = _selectedProduct.Price.ToString("0.00", CultureInfo.InvariantCulture);
         }
 
-        private bool TryGetInputs(out string itemName, out string itemCode, out string category, out decimal price, out int qty)
+        private bool TryGetInputs(out string itemName, out string itemCode, out string barcode, out string category, out decimal price, out int qty)
         {
             itemName = NameInput.Text.Trim();
             itemCode = CodeInput.Text.Trim();
+            barcode = BarcodeInput.Text.Trim();
             category = CategoryInput.Text.Trim();
             price = 0m;
             qty = 0;
@@ -193,8 +195,47 @@ namespace SukiMars.Views
         {
             NameInput.Text = string.Empty;
             CodeInput.Text = string.Empty;
+            BarcodeInput.Text = string.Empty;
             CategoryInput.Text = string.Empty;
             PriceInput.Text = string.Empty;
+        }
+
+        private void ItemDescription_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedProduct is null)
+            {
+                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkRed;
+                InventoryMessageText.Text = "Select a product first.";
+                return;
+            }
+
+            DescriptionProductName.Text = _selectedProduct.ItemName;
+            DescriptionInput.Text = _selectedProduct.ItemDescription;
+            DescriptionOverlay.Visibility = Visibility.Visible;
+        }
+
+        private async void DescriptionSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedProduct is null) return;
+
+            try
+            {
+                await _inventoryService.UpdateDescriptionAsync(_selectedProduct.ItemId, DescriptionInput.Text.Trim());
+                DescriptionOverlay.Visibility = Visibility.Collapsed;
+                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkGreen;
+                InventoryMessageText.Text = "Description updated.";
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkRed;
+                InventoryMessageText.Text = ex.Message;
+            }
+        }
+
+        private void DescriptionCancel_Click(object sender, RoutedEventArgs e)
+        {
+            DescriptionOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void SearchBox_GotFocus(object sender, RoutedEventArgs e)

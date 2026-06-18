@@ -117,26 +117,7 @@ GO
    5) INVENTORY + DETAILS
    ========================= */
 DECLARE @managerId INT = (SELECT TOP 1 userID FROM dbo.user_accounts WHERE username = 'manager1');
-DECLARE @supplier1 INT = (SELECT TOP 1 supplierID FROM dbo.supplier WHERE supplierName = 'Fresh Source Trading');
-
-IF @managerId IS NOT NULL AND @supplier1 IS NOT NULL
-AND NOT EXISTS (SELECT 1 FROM dbo.inventory WHERE acquisitionDate = '2026-04-25' AND userID = @managerId)
-BEGIN
-    INSERT INTO dbo.inventory (acquisitionDate, deliveryDate, supplierID, acquisitionCost, userID, deliveryStatus)
-    VALUES ('2026-04-25', '2026-04-26', @supplier1, 12500.00, @managerId, 'Delivered');
-
-    DECLARE @inventoryID INT = SCOPE_IDENTITY();
-
-    INSERT INTO dbo.inventory_details (inventoryID, itemID, quantity)
-    SELECT @inventoryID, itemID, quantity
-    FROM
-    (
-        SELECT (SELECT itemID FROM dbo.mart_items WHERE itemCode = 'BEV-COKE-1L') AS itemID, 60 AS quantity
-        UNION ALL SELECT (SELECT itemID FROM dbo.mart_items WHERE itemCode = 'CAN-SARD-155'), 150
-        UNION ALL SELECT (SELECT itemID FROM dbo.mart_items WHERE itemCode = 'DAI-MILK-1L'), 40
-    ) x
-    WHERE itemID IS NOT NULL;
-END;
+-- Sample warehouse data removed
 GO
 
 /* =========================

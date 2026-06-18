@@ -3,6 +3,18 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="ReportsPage"
       Background="#FFF3F4F6">
+    <Page.Resources>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F9FAFB" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+    </Page.Resources>
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -17,33 +29,42 @@
             </DockPanel>
         </Border>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
-            <Button Content="Reports" Margin="0,0,8,0" Padding="14,6" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+            <TextBlock Text="Range:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox x:Name="RangeCombo" Width="120" SelectedIndex="2">
+                <ComboBoxItem Tag="Daily">Daily</ComboBoxItem>
+                <ComboBoxItem Tag="Weekly">Weekly</ComboBoxItem>
+                <ComboBoxItem Tag="Monthly">Monthly</ComboBoxItem>
+            </ComboBox>
         </StackPanel>
 
+        <!-- Top summary row (four boxes). Each box shows selected-range large value and the other-range small subtext) -->
         <UniformGrid Grid.Row="2" Rows="1" Columns="4" Margin="0,0,0,10">
             <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
                 <StackPanel>
                     <TextBlock Text="Total Sales"/>
-                    <TextBlock Text="0.00" FontSize="24" FontWeight="Bold"/>
+                    <TextBlock x:Name="TotalSalesText" Text="₱0.00" FontSize="24" FontWeight="Bold"/>
                 </StackPanel>
             </Border>
+
             <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
                 <StackPanel>
-                    <TextBlock Text="Transactions this Month"/>
-                    <TextBlock Text="0" FontSize="24" FontWeight="Bold"/>
+                    <TextBlock x:Name="TransactionsLabel" Text="Transactions this Month"/>
+                    <TextBlock x:Name="TransactionsText" Text="0" FontSize="24" FontWeight="Bold"/>
                 </StackPanel>
             </Border>
+
             <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
                 <StackPanel>
                     <TextBlock Text="Avg. per Transaction"/>
-                    <TextBlock Text="0.00" FontSize="24" FontWeight="Bold"/>
+                    <TextBlock x:Name="AvgText" Text="₱0.00" FontSize="24" FontWeight="Bold"/>
                 </StackPanel>
             </Border>
+
             <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
                 <StackPanel>
                     <TextBlock Text="Top Product"/>
-                    <TextBlock Text="-" FontSize="24" FontWeight="Bold"/>
+                    <TextBlock x:Name="TopProductText" Text="-" FontSize="24" FontWeight="Bold"/>
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -54,33 +75,188 @@
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <DataGrid x:Name="ReportGrid" Grid.Column="0" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Margin="0,0,10,0">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Product Name" Binding="{Binding Col1}" Width="*" />
-                    <DataGridTextColumn Header="Category" Binding="{Binding Col2}" Width="*" />
-                    <DataGridTextColumn Header="Price" Binding="{Binding Col3}" Width="*" />
-                    <DataGridTextColumn Header="Stock" Binding="{Binding Col4}" Width="*" />
-                    <DataGridTextColumn Header="Status" Binding="{Binding Col5}" Width="*" />
-                    <DataGridTextColumn Header="Actions" Binding="{Binding Col6}" Width="*" />
-                </DataGrid.Columns>
-            </DataGrid>
+            <Grid Grid.Column="0" Margin="0,0,10,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="14">
-                <StackPanel>
-                    <TextBlock Text="Today" FontWeight="SemiBold" FontSize="16" />
-                    <Rectangle Height="2" Fill="#E5E7EB" Margin="0,8,0,12" />
-                    <TextBlock Text="Daily Sales (bind from database later)"
-                               FontSize="13"
-                               Foreground="#6B7280"
-                               Margin="0,0,0,10" />
-                    <Border Background="#c2f7c8" Height="180" CornerRadius="8">
-                        <TextBlock Text="Chart Placeholder"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Foreground="Black"
-                                   FontWeight="Bold" />
+                <Border Grid.Column="0"
+                        Background="White"
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="TopCategoriesTitle"
+                                   Text="Top 10 Best Selling Categories"
+                                   FontWeight="Bold"
+                                   FontSize="15"
+                                   Foreground="#111827"
+                                   Margin="0,0,0,12" />
+                        <DataGrid x:Name="TopCategoriesGrid"
+                                  Grid.Row="1"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserResizeRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#E5E7EB"
+                                  Background="White"
+                                  BorderThickness="0"
+                                  RowHeaderWidth="0"
+                                  RowHeight="40"
+                                  ColumnHeaderHeight="40"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="40" />
+                                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Qty Sold" Binding="{Binding QtySold}" Width="80">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Total Sales" Binding="{Binding TotalSales, StringFormat=₱{0:N2}}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Background="White"
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="TopProductsTitle"
+                                   Text="Top 10 Best Selling Products"
+                                   FontWeight="Bold"
+                                   FontSize="15"
+                                   Foreground="#111827"
+                                   Margin="0,0,0,12" />
+                        <DataGrid x:Name="TopProductsGrid"
+                                  Grid.Row="1"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserResizeRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#E5E7EB"
+                                  Background="White"
+                                  BorderThickness="0"
+                                  RowHeaderWidth="0"
+                                  RowHeight="40"
+                                  ColumnHeaderHeight="40"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="40" />
+                                <DataGridTextColumn Header="Product" Binding="{Binding ProductName}" Width="*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Qty Sold" Binding="{Binding QtySold}" Width="80">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Total Sales" Binding="{Binding TotalSales, StringFormat=₱{0:N2}}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="14" BorderBrush="#E5E7EB" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" MinHeight="340" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock x:Name="ChartTitle"
+                               Text="Total Sales Overview"
+                               FontWeight="Bold"
+                               FontSize="16"
+                               Foreground="#111827"
+                               Grid.Row="0"
+                               Margin="0,0,0,4" />
+
+                    <TextBlock x:Name="ChartTotalText"
+                               Text="₱0.00"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="#0B6B3C"
+                               Grid.Row="1"
+                               Margin="0,0,0,6" />
+
+                    <Border Grid.Row="2" Margin="0,0,0,12" />
+
+                    <Border Grid.Row="3"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Background="#FAFAFA"
+                            Padding="8,8,8,4">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <Canvas x:Name="ChartCanvas"
+                                    Height="246"
+                                    MinWidth="400"
+                                    Background="Transparent" />
+                        </ScrollViewer>
                     </Border>
-                </StackPanel>
+
+                    <!-- Removed Sales by Payment Method and Inventory Summary as requested -->
+                </Grid>
             </Border>
         </Grid>
     </Grid>

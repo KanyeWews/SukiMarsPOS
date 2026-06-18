@@ -1,0 +1,457 @@
+<Page x:Class="SukiMars.Views.WarehousePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Warehouse"
+      Background="#FFF3F4F6">
+	<Page.Resources>
+		<Style x:Key="FilterComboBox" TargetType="ComboBox">
+			<Setter Property="Height" Value="38" />
+			<Setter Property="Padding" Value="10,6" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#D1D5DB" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="FontSize" Value="13" />
+		</Style>
+
+		<Style x:Key="FilterDatePicker" TargetType="DatePicker">
+			<Setter Property="Height" Value="38" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="FontSize" Value="13" />
+		</Style>
+
+		<Style x:Key="StatusChipButton" TargetType="Button">
+			<Setter Property="Height" Value="34" />
+			<Setter Property="Padding" Value="16,6" />
+			<Setter Property="Margin" Value="0,0,10,0" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="BorderBrush" Value="Transparent" />
+			<Setter Property="Cursor" Value="Hand" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<Border x:Name="ChipBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="17"
+                                Padding="{TemplateBinding Padding}">
+							<ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True" />
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter TargetName="ChipBorder" Property="Opacity" Value="0.9" />
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style x:Key="ActionLinkButton" TargetType="Button">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Foreground" Value="#2563EB" />
+			<Setter Property="Cursor" Value="Hand" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="Margin" Value="0,0,14,0" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<TextBlock Text="{TemplateBinding Content}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   TextDecorations="Underline"
+                                   VerticalAlignment="Center" />
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style x:Key="EditActionLinkButton" TargetType="Button" BasedOn="{StaticResource ActionLinkButton}">
+			<Setter Property="Visibility" Value="Collapsed" />
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding CanEdit}" Value="True">
+					<Setter Property="Visibility" Value="Visible" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+
+		<Style x:Key="AsnLinkButton" TargetType="Button">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Foreground" Value="#0D9488" />
+			<Setter Property="Cursor" Value="Hand" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="HorizontalAlignment" Value="Left" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<TextBlock Text="{TemplateBinding Content}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   TextDecorations="Underline"
+                                   VerticalAlignment="Center" />
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style x:Key="NewOrderButton" TargetType="Button">
+			<Setter Property="Height" Value="38" />
+			<Setter Property="Padding" Value="18,0" />
+			<Setter Property="Background" Value="#0B6B3C" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="BorderBrush" Value="#0B6B3C" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Cursor" Value="Hand" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+							<ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+						</Border>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="White" />
+			<Setter Property="Foreground" Value="#374151" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Padding" Value="14,12" />
+			<Setter Property="BorderBrush" Value="#E5E7EB" />
+			<Setter Property="BorderThickness" Value="0,0,0,1" />
+			<Setter Property="HorizontalContentAlignment" Value="Left" />
+		</Style>
+
+		<Style TargetType="DataGridCell">
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="14,0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Foreground" Value="#111827" />
+			<Setter Property="FontSize" Value="13" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="DataGridCell">
+						<Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+							<ContentPresenter VerticalAlignment="Center" />
+						</Border>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style TargetType="DataGridRow">
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#E5E7EB" />
+			<Setter Property="BorderThickness" Value="0,0,0,1" />
+			<Style.Triggers>
+				<Trigger Property="AlternationIndex" Value="1">
+					<Setter Property="Background" Value="#FAFAFA" />
+				</Trigger>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter Property="Background" Value="#F3F4F6" />
+				</Trigger>
+			</Style.Triggers>
+		</Style>
+	</Page.Resources>
+
+	<Grid>
+	<Grid Margin="18">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<Border Grid.Row="0" Background="#c2f7c8" CornerRadius="12" Padding="16" Margin="0,0,0,14">
+			<DockPanel>
+				<TextBlock Text="SukiMars Cart - Warehouse"
+                           FontWeight="Bold"
+                           FontSize="22"
+                           Foreground="Black"
+                           DockPanel.Dock="Left" />
+			</DockPanel>
+		</Border>
+
+		<!-- Filter bar -->
+		<Grid Grid.Row="1" Margin="0,0,0,14">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="280" />
+				<ColumnDefinition Width="12" />
+				<ColumnDefinition Width="140" />
+				<ColumnDefinition Width="12" />
+				<ColumnDefinition Width="170" />
+				<ColumnDefinition Width="12" />
+				<ColumnDefinition Width="155" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+
+			<!-- Search with icon -->
+			<Border Grid.Column="0"
+					Height="38"
+					BorderBrush="#D1D5DB"
+					BorderThickness="1"
+					Background="White">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="36" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0"
+							   Text="&#xE721;"
+							   FontFamily="Segoe MDL2 Assets"
+							   FontSize="14"
+							   Foreground="#9CA3AF"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center" />
+					<TextBox x:Name="SearchBox"
+							 Grid.Column="1"
+							 BorderThickness="0"
+							 Background="Transparent"
+							 VerticalContentAlignment="Center"
+							 FontSize="13"
+							 Padding="0,0,10,0"
+							 GotFocus="SearchBox_GotFocus"
+							 LostFocus="SearchBox_LostFocus"
+							 TextChanged="Filter_Changed" />
+				</Grid>
+			</Border>
+
+			<ComboBox x:Name="StatusFilter"
+					  Grid.Column="2"
+					  Style="{StaticResource FilterComboBox}"
+					  SelectionChanged="Filter_Changed" />
+
+			<ComboBox x:Name="SupplierFilter"
+					  Grid.Column="4"
+					  Style="{StaticResource FilterComboBox}"
+					  SelectionChanged="Filter_Changed" />
+
+			<DatePicker x:Name="DeliveryDateFilter"
+						Grid.Column="6"
+						Style="{StaticResource FilterDatePicker}"
+						SelectedDateChanged="Filter_Changed" />
+
+			<Button x:Name="NewOrderButton"
+					Grid.Column="8"
+					Content="+ New Order"
+					Style="{StaticResource NewOrderButton}"
+					Click="NewOrderButton_Click" />
+		</Grid>
+
+		<!-- Status filter chips -->
+		<StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    Margin="0,0,0,14">
+			<Button x:Name="AllStatusChip"
+					Style="{StaticResource StatusChipButton}"
+					Background="#1F2937"
+					Foreground="White"
+					IsHitTestVisible="False"
+					Cursor="Arrow"
+					Tag="All" />
+			<Button x:Name="PendingChip"
+					Style="{StaticResource StatusChipButton}"
+					Background="#FEF3C7"
+					Foreground="#B45309"
+					IsHitTestVisible="False"
+					Cursor="Arrow"
+					Tag="Pending" />
+			<Button x:Name="OrderedChip"
+					Style="{StaticResource StatusChipButton}"
+					Background="#DBEAFE"
+					Foreground="#1D4ED8"
+					IsHitTestVisible="False"
+					Cursor="Arrow"
+					Tag="Ordered" />
+			<Button x:Name="DeliveredChip"
+					Style="{StaticResource StatusChipButton}"
+					Background="#EDE9FE"
+					Foreground="#6D28D9"
+					IsHitTestVisible="False"
+					Cursor="Arrow"
+					Tag="Delivered" />
+	<Button x:Name="CancelledChip"
+					Style="{StaticResource StatusChipButton}"
+					Background="#FEE2E2"
+					Foreground="#B91C1C"
+					IsHitTestVisible="False"
+					Cursor="Arrow"
+					Tag="Cancelled" />
+		</StackPanel>
+
+		<!-- Shipments table -->
+		<Border Grid.Row="3"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    CornerRadius="2">
+			<DataGrid x:Name="ShipmentsGrid"
+					  AutoGenerateColumns="False"
+					  CanUserAddRows="False"
+					  CanUserResizeRows="False"
+					  IsReadOnly="True"
+					  HeadersVisibility="Column"
+					  GridLinesVisibility="None"
+					  Background="White"
+					  BorderThickness="0"
+					  RowHeaderWidth="0"
+					  RowHeight="52"
+					  ColumnHeaderHeight="46"
+					  SelectionMode="Single"
+					  SelectionUnit="FullRow"
+					  AlternationCount="2">
+				<DataGrid.Columns>
+					<DataGridTemplateColumn Header="ASN Number" Width="150">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<Button Content="{Binding ASNNumber}"
+										Style="{StaticResource AsnLinkButton}"
+										Click="View_Click" />
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+
+					<DataGridTextColumn Header="Supplier"
+										Binding="{Binding Supplier}"
+										Width="190" />
+
+					<DataGridTemplateColumn Header="Comments" Width="*">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding Comments}"
+										   FontStyle="Italic"
+										   Foreground="#4B5563"
+										   TextWrapping="Wrap"
+										   VerticalAlignment="Center" />
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+
+					<DataGridTextColumn Header="Est. Delivery Date"
+										Binding="{Binding EstimatedDeliveryDate, StringFormat='{}{0:MMM d, yyyy}'}"
+										Width="145" />
+
+					<DataGridTemplateColumn Header="Status" Width="115">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<Border CornerRadius="12"
+										Padding="12,5"
+										HorizontalAlignment="Left"
+										VerticalAlignment="Center">
+									<Border.Style>
+										<Style TargetType="Border">
+											<Setter Property="Background" Value="#F3F4F6" />
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding Status}" Value="Pending">
+													<Setter Property="Background" Value="#FEF3C7" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding Status}" Value="Ordered">
+													<Setter Property="Background" Value="#DBEAFE" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding Status}" Value="Delivered">
+													<Setter Property="Background" Value="#EDE9FE" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding Status}" Value="Cancelled">
+													<Setter Property="Background" Value="#FEE2E2" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Border.Style>
+									<TextBlock Text="{Binding Status}" FontWeight="SemiBold" FontSize="12">
+										<TextBlock.Style>
+											<Style TargetType="TextBlock">
+												<Setter Property="Foreground" Value="#374151" />
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding Status}" Value="Pending">
+														<Setter Property="Foreground" Value="#B45309" />
+													</DataTrigger>
+													<DataTrigger Binding="{Binding Status}" Value="Ordered">
+														<Setter Property="Foreground" Value="#1D4ED8" />
+													</DataTrigger>
+													<DataTrigger Binding="{Binding Status}" Value="Delivered">
+														<Setter Property="Foreground" Value="#6D28D9" />
+													</DataTrigger>
+													<DataTrigger Binding="{Binding Status}" Value="Cancelled">
+														<Setter Property="Foreground" Value="#B91C1C" />
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</TextBlock.Style>
+									</TextBlock>
+								</Border>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+
+					<DataGridTextColumn Header="Last Update"
+										Binding="{Binding LastUpdate, StringFormat='{}{0:MMM d, yyyy h:mm tt}'}"
+										Width="175" />
+
+					<DataGridTextColumn Header="Updated by"
+										Binding="{Binding UpdatedBy}"
+										Width="105" />
+
+					<DataGridTemplateColumn Header="Actions" Width="110">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+									<Button Content="View"
+											Style="{StaticResource ActionLinkButton}"
+											Click="View_Click" />
+									<Button Content="Edit"
+											Style="{StaticResource EditActionLinkButton}"
+											Click="Edit_Click" />
+								</StackPanel>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+				</DataGrid.Columns>
+			</DataGrid>
+		</Border>
+	</Grid>
+
+	<!-- Edit Status modal overlay (full-screen) -->
+	<Grid x:Name="StatusOverlay" Visibility="Collapsed">
+		<Border Background="#80000000" />
+		<Border Background="White" CornerRadius="10" Padding="24"
+				Width="400" VerticalAlignment="Center" HorizontalAlignment="Center"
+				BorderBrush="#D1D5DB" BorderThickness="1">
+			<Border.Effect>
+				<DropShadowEffect BlurRadius="16" Opacity="0.25" ShadowDepth="4" />
+			</Border.Effect>
+			<StackPanel>
+				<TextBlock Text="Update Shipment Status" FontSize="18" FontWeight="Bold" Margin="0,0,0,6" />
+				<TextBlock x:Name="StatusOverlayASN" FontSize="13" Foreground="#6B7280" Margin="0,0,0,4" />
+				<TextBlock x:Name="StatusOverlayCurrent" FontSize="13" Foreground="#6B7280" Margin="0,0,0,14" />
+				<TextBlock Text="New Status" FontWeight="SemiBold" Margin="0,0,0,6" />
+				<ComboBox x:Name="StatusOverlayCombo" Height="36" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,0,18" />
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+					<Button Content="Cancel" Padding="16,6" Margin="0,0,10,0" Click="StatusCancel_Click" />
+					<Button Content="Save" Padding="16,6" Background="#0B6B3C" Foreground="White" Click="StatusSave_Click" />
+				</StackPanel>
+			</StackPanel>
+		</Border>
+	</Grid>
+	</Grid>
+</Page>

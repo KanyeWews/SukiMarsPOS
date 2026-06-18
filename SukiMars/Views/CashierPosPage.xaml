@@ -33,7 +33,9 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
+                <!-- Search only -->
                 <TextBox x:Name="SearchBox"
+                         Grid.Row="0"
                          Height="40"
                          FontSize="12"
                          VerticalContentAlignment="Center"
@@ -41,30 +43,128 @@
                          Text="Search product..."
                          Foreground="Gray"
                          GotFocus="SearchBox_GotFocus"
-                         LostFocus="SearchBox_LostFocus" />
+                         LostFocus="SearchBox_LostFocus"
+                         KeyDown="SearchBox_KeyDown" />
 
-                <UniformGrid Grid.Row="1" Columns="4" Margin="0,12,0,12">
-                    <Button Content="All" Tag="All" Click="Category_Click" />
-                    <Button Content="Beverages" Tag="Beverages" Click="Category_Click" />
-                    <Button Content="Canned Goods" Tag="Canned Goods" Click="Category_Click" />
-                    <Button Content="Dairy" Tag="Dairy" Click="Category_Click" />
-                </UniformGrid>
+                <!-- Multi-select category filter -->
+                <Border Grid.Row="1" Margin="0,12,0,12"
+                        BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4"
+                        Background="White" MinHeight="38">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
-                    <TextBlock Text="Qty:" VerticalAlignment="Center" />
-                    <TextBox x:Name="QuantityInput" Width="70" Margin="8,0,0,0" Text="1" VerticalContentAlignment="Center" />
-                    <Button Content="Add Selected To Cart" Margin="10,0,0,0" Click="AddToCart_Click" />
-                    <Button Content="Search" Margin="10,0,0,0" Click="Search_Click" />
-                </StackPanel>
+                        <!-- Selected chips + search input -->
+                        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto">
+                            <WrapPanel x:Name="CategoryChipsPanel" Orientation="Horizontal" VerticalAlignment="Center" Margin="4,2">
+                                <!-- Chips are added dynamically -->
+                                <TextBox x:Name="CategorySearchBox"
+                                         BorderThickness="0"
+                                         MinWidth="120" Width="Auto"
+                                         VerticalAlignment="Center"
+                                         VerticalContentAlignment="Center"
+                                         Height="28"
+                                         FontSize="12"
+                                         Text="Filter by category..."
+                                         Foreground="Gray"
+                                         GotFocus="CategorySearchBox_GotFocus"
+                                         LostFocus="CategorySearchBox_LostFocus"
+                                         TextChanged="CategorySearchBox_TextChanged" />
+                            </WrapPanel>
+                        </ScrollViewer>
+
+                        <!-- Dropdown arrow -->
+                        <Button Grid.Column="1" Content="▼" FontSize="10"
+                                Width="28" BorderThickness="0" Background="Transparent"
+                                VerticalAlignment="Center" Cursor="Hand"
+                                Click="CategoryDropdownToggle_Click" />
+                    </Grid>
+                </Border>
+
+                <!-- Category dropdown popup -->
+                <Popup x:Name="CategoryPopup" Placement="Bottom"
+                       PlacementTarget="{Binding ElementName=CategoryChipsPanel}"
+                       StaysOpen="False" AllowsTransparency="True">
+                    <Border Background="White" BorderBrush="#D1D5DB" BorderThickness="1"
+                            CornerRadius="4" Padding="0" MinWidth="300"
+                            MaxHeight="220">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="8" Opacity="0.15" ShadowDepth="2" />
+                        </Border.Effect>
+                        <ListBox x:Name="CategoryListBox"
+                                 BorderThickness="0"
+                                 SelectionMode="Multiple"
+                                 SelectionChanged="CategoryListBox_SelectionChanged"
+                                 Background="Transparent">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="10,8" />
+                                    <Setter Property="FontSize" Value="13" />
+                                    <Setter Property="Cursor" Value="Hand" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </Border>
+                </Popup>
+
+                <!-- Qty / Add / Search + Payment Method aligned right -->
+                <Grid Grid.Row="2" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- left controls -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Text="Qty:" VerticalAlignment="Center" />
+                        <TextBox x:Name="QuantityInput" Width="70" Margin="8,0,0,0" Text="1" VerticalContentAlignment="Center" />
+                        <Button Content="Add Selected To Cart" Margin="10,0,0,0" Click="AddToCart_Click" />
+                        <Button x:Name="SearchButton" Content="Search" Margin="10,0,0,0" Click="Search_Click" />
+                    </StackPanel>
+
+                    <!-- right controls: selected payment + payment method -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock x:Name="SelectedPaymentText"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827" />
+                        <Button x:Name="PaymentMethodButton"
+                                Content="Payment Method"
+                                Margin="0,0,0,0"
+                                VerticalAlignment="Center"
+                                Click="PaymentMethodButton_Click">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Cash" Click="PaymentMethodMenuItem_Click" />
+                                    <MenuItem Header="Card" Click="PaymentMethodMenuItem_Click" />
+                                    <MenuItem Header="E-wallet" Click="PaymentMethodMenuItem_Click" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
                 <DataGrid x:Name="ProductsGrid"
                           Grid.Row="3"
                           AutoGenerateColumns="False"
                           CanUserAddRows="False"
-                          IsReadOnly="True">
+                          IsReadOnly="True"
+                          MouseDoubleClick="ProductsGrid_MouseDoubleClick">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Product" Binding="{Binding ItemName}" Width="2*" />
                         <DataGridTextColumn Header="Code" Binding="{Binding ItemCode}" Width="*" />
+                        <DataGridTemplateColumn Header="Barcode" Width="200">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Source="{Binding BarcodeImage}" Height="35" Stretch="Uniform"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           ToolTip="{Binding Barcode}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="*" />
                         <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="*" />
                     </DataGrid.Columns>
@@ -80,6 +180,8 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Text="Current Transaction" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" />
+
+                <!-- Transaction list: add an 'x' button column at the far right -->
                 <ListView x:Name="TransactionItemsList" Grid.Row="1">
                     <ListView.View>
                         <GridView>
@@ -87,12 +189,41 @@
                             <GridViewColumn Header="Qty" DisplayMemberBinding="{Binding Quantity}" Width="45" />
                             <GridViewColumn Header="Price" DisplayMemberBinding="{Binding UnitPrice}" Width="80" />
                             <GridViewColumn Header="Line Total" DisplayMemberBinding="{Binding LineTotal}" Width="90" />
+                            <GridViewColumn Header="">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="x"
+                                                Width="28"
+                                                Height="22"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                Tag="{Binding}"
+                                                Click="RemoveCartItem_Click"
+                                                ToolTip="Remove item" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>
+
                 <StackPanel Grid.Row="2" Margin="0,12,0,0">
                     <TextBlock x:Name="SubtotalText" Text="Subtotal: 0.00" FontWeight="SemiBold" />
                     <TextBlock x:Name="TotalText" Text="Total: 0.00" FontSize="20" FontWeight="Bold" Margin="0,6,0,12" />
+
+                    <!-- Amount received and change (visible only for Cash) -->
+                    <StackPanel x:Name="AmountReceivedPanel" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+                        <TextBlock x:Name="AmountReceivedLabel" Text="Amount Received:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox x:Name="AmountReceivedInput" Width="140" VerticalContentAlignment="Center" TextChanged="AmountReceivedInput_TextChanged" />
+                        <TextBlock x:Name="ChangeText" VerticalAlignment="Center" Margin="12,0,0,0" FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <!-- Reference number input for Card / E-wallet (hidden for Cash) -->
+                    <StackPanel x:Name="ReferenceNumberPanel" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+                        <TextBlock Text="Reference #:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox x:Name="ReferenceNumberInput" Width="200" VerticalContentAlignment="Center" />
+                    </StackPanel>
+
                     <Button Content="Process payment"
                             Height="40"
                             Margin="0,0,0,8"

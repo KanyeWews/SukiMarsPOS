@@ -1,0 +1,112 @@
+<Window x:Class="SukiMars.Views.ReceiptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Receipt"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="White">
+    <Window.Resources>
+        <!-- Dashed separator style -->
+        <Style x:Key="DashedSeparator" TargetType="Separator">
+            <Setter Property="Foreground" Value="#D1D5DB" />
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="6,8,6,8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Grid Height="{TemplateBinding Height}">
+                            <Line X1="0" Y1="0" X2="1" Y2="0"
+                                  Stretch="Fill"
+                                  Stroke="{TemplateBinding Foreground}"
+                                  StrokeThickness="1"
+                                  StrokeDashArray="3 2"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Padding="18" Background="White" CornerRadius="6" BorderBrush="#E5E7EB" BorderThickness="1">
+        <StackPanel Width="360">
+            <TextBlock Text="Receipt" FontSize="22" FontWeight="Bold" TextAlignment="Center" Margin="0,0,0,20"/>
+            <TextBlock Text="1281 Tropical Avenue Corner Luxembourg Street" FontSize="12" TextAlignment="Center"/>
+            <TextBlock Text="BF Homes International, Las Piñas, 1740, Philippines" FontSize="12" TextAlignment="Center" Margin="0,0,0,8"/>
+
+            <!-- dashed separator between address and date -->
+            <Separator Style="{StaticResource DashedSeparator}" />
+
+            <TextBlock x:Name="DateText" FontSize="12" TextAlignment="Center" Margin="0,0,0,12"/>
+
+            <!-- dashed separator between date and items -->
+            <Separator Style="{StaticResource DashedSeparator}" />
+
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="80" />
+                </Grid.ColumnDefinitions>
+
+                <ItemsControl x:Name="ItemsList" Grid.ColumnSpan="2">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding ItemName}" Grid.Column="0" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding LineTotal, StringFormat=N2}" Grid.Column="1" FontSize="12" TextAlignment="Right"/>
+                                <TextBlock Text="{Binding Quantity, StringFormat=' x{0}'}" Grid.Column="0" FontSize="11" Foreground="#6B7280" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+                                <TextBlock Text="{Binding UnitPrice, StringFormat=N2}" Grid.Column="1" FontSize="11" Foreground="#6B7280" TextAlignment="Right" Margin="0,16,0,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+
+            <!-- dashed separator between items and totals -->
+            <Separator Style="{StaticResource DashedSeparator}" Margin="0,12,0,12"/>
+
+            <!-- Totals grid: added Amount Received and Change rows aligned to the right -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="120" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Sub-total -->
+                    <RowDefinition Height="Auto"/> <!-- VATable Sales -->
+                    <RowDefinition Height="Auto"/> <!-- VAT -->
+                    <RowDefinition Height="Auto"/> <!-- Amount Received -->
+                    <RowDefinition Height="Auto"/> <!-- Change -->
+                    <RowDefinition Height="Auto"/> <!-- TOTAL -->
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Sub-total" Grid.Row="0" Grid.Column="0" FontWeight="SemiBold"/>
+                <TextBlock x:Name="SubTotalText" Grid.Row="0" Grid.Column="1" TextAlignment="Right" FontWeight="SemiBold"/>
+
+                <TextBlock Text="VATable Sales (12%)" Grid.Row="1" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="VatableText" Grid.Row="1" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+
+                <TextBlock Text="VAT" Grid.Row="2" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="VatText" Grid.Row="2" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+
+                <TextBlock Text="Amount Received" Grid.Row="3" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="AmountReceivedText" Grid.Row="3" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+
+                <TextBlock Text="Change" Grid.Row="4" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="ChangeText" Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+
+                <TextBlock Text="TOTAL" Grid.Row="5" Grid.Column="0" Margin="0,12,0,0" FontSize="14" FontWeight="Bold"/>
+                <TextBlock x:Name="TotalText" Grid.Row="5" Grid.Column="1" Margin="0,12,0,0" TextAlignment="Right" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+
+            <!-- payment method moved to lowest section -->
+            <TextBlock x:Name="PaymentMethodText" Margin="0,12,0,0" FontWeight="SemiBold" TextAlignment="Center"/>
+
+            <TextBlock Text="Thank you for your purchase!" Margin="0,12,0,0" TextAlignment="Center" Foreground="#374151" />
+        </StackPanel>
+    </Border>
+</Window>

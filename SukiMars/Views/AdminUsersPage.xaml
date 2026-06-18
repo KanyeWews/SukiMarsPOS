@@ -3,6 +3,151 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="AdminUsersPage"
       Background="#FFF3F4F6">
+    <Page.Resources>
+        <Style x:Key="StatusChipButton" TargetType="Button">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="16,6" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ChipBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="17"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ChipBorder" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ActionLinkButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#2563EB" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,14,0" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock Text="{TemplateBinding Content}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   TextDecorations="Underline"
+                                   VerticalAlignment="Center" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="UsernameLinkButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#0D9488" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock Text="{TemplateBinding Content}"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   TextDecorations="Underline"
+                                   VerticalAlignment="Center" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AddUserButton" TargetType="Button">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="18,0" />
+            <Setter Property="Background" Value="#0B6B3C" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#0B6B3C" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="14,12" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Style.Triggers>
+                <Trigger Property="AlternationIndex" Value="1">
+                    <Setter Property="Background" Value="#FAFAFA" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3F4F6" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -13,53 +158,173 @@
 
         <Border Grid.Row="0" Background="#c2f7c8" CornerRadius="12" Padding="16" Margin="0,0,0,14">
             <DockPanel>
-                <TextBlock Text="SukiMars Cart - Administrator Panel" FontWeight="Bold" FontSize="22" Foreground="Black" DockPanel.Dock="Left" />
+                <TextBlock Text="SukiMars Cart - Administrator Panel"
+                           FontWeight="Bold"
+                           FontSize="22"
+                           Foreground="Black"
+                           DockPanel.Dock="Left" />
             </DockPanel>
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,0,0,10">
+        <Grid Grid.Row="1" Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="360" />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="320" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBox x:Name="SearchUserBox" Grid.Column="0" Height="38" VerticalContentAlignment="Center" Text="Search User..." />
-            <Button x:Name="SearchUserButton" Grid.Column="2" Content="Search" Height="38" Padding="12,6" />
-            <Button Grid.Column="4" Content="+ Add User" Margin="12,0,0,0" Padding="16,6" Click="AddUser_Click" />
+            <Border Grid.Column="0"
+                    Height="38"
+                    BorderBrush="#D1D5DB"
+                    BorderThickness="1"
+                    Background="White">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="&#xE721;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="14"
+                               Foreground="#9CA3AF"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                    <TextBox x:Name="SearchUserBox"
+                             Grid.Column="1"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             VerticalContentAlignment="Center"
+                             FontSize="13"
+                             Padding="0,0,10,0"
+                             GotFocus="SearchUserBox_GotFocus"
+                             LostFocus="SearchUserBox_LostFocus"
+                             TextChanged="SearchUserBox_TextChanged" />
+                </Grid>
+            </Border>
+
+            <Button Grid.Column="2"
+                    Content="+ Add User"
+                    Style="{StaticResource AddUserButton}"
+                    Click="AddUser_Click" />
         </Grid>
 
-        <UniformGrid Grid.Row="2" Rows="1" Columns="3" Margin="0,0,0,10">
-            <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
-                <StackPanel>
-                    <TextBlock Text="Total Users"/>
-                    <TextBlock Text="0" FontSize="24" FontWeight="Bold"/>
-                </StackPanel>
-            </Border>
-            <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
-                <StackPanel>
-                    <TextBlock Text="Active"/>
-                    <TextBlock Text="0" FontSize="24" FontWeight="Bold"/>
-                </StackPanel>
-            </Border>
-            <Border Background="White" Margin="6" Padding="14" CornerRadius="8">
-                <StackPanel>
-                    <TextBlock Text="Inactive"/>
-                    <TextBlock Text="0" FontSize="24" FontWeight="Bold"/>
-                </StackPanel>
-            </Border>
-        </UniformGrid>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,14">
+            <Button x:Name="AllStatusChip"
+                    Style="{StaticResource StatusChipButton}"
+                    Background="#1F2937"
+                    Foreground="White"
+                    Click="StatusChip_Click"
+                    Tag="All" />
+            <Button x:Name="ActiveStatusChip"
+                    Style="{StaticResource StatusChipButton}"
+                    Background="#D1FAE5"
+                    Foreground="#047857"
+                    Click="StatusChip_Click"
+                    Tag="Active" />
+            <Button x:Name="InactiveStatusChip"
+                    Style="{StaticResource StatusChipButton}"
+                    Background="#FEE2E2"
+                    Foreground="#B91C1C"
+                    Click="StatusChip_Click"
+                    Tag="Inactive" />
+        </StackPanel>
 
-        <DataGrid x:Name="UsersGrid" Grid.Row="3" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Col1}" Width="*" />
-                <DataGridTextColumn Header="Username" Binding="{Binding Col2}" Width="*" />
-                <DataGridTextColumn Header="Role" Binding="{Binding Col3}" Width="*" />
-                <DataGridTextColumn Header="Status" Binding="{Binding Col4}" Width="*" />
-                <DataGridTextColumn Header="Actions" Binding="{Binding Col5}" Width="*" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="3"
+                BorderBrush="#E5E7EB"
+                BorderThickness="1"
+                CornerRadius="2"
+                Background="White">
+            <DataGrid x:Name="UsersGrid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserResizeRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="None"
+                      Background="White"
+                      BorderThickness="0"
+                      RowHeaderWidth="0"
+                      RowHeight="52"
+                      ColumnHeaderHeight="46"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      AlternationCount="2">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name"
+                                        Binding="{Binding Name}"
+                                        Width="*" />
+
+                    <DataGridTemplateColumn Header="Username" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Username}"
+                                        Style="{StaticResource UsernameLinkButton}"
+                                        Click="EditUser_Click" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Role"
+                                        Binding="{Binding Role}"
+                                        Width="*" />
+
+                    <DataGridTemplateColumn Header="Status" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="12"
+                                        Padding="12,5"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#F3F4F6" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Status}" Value="Active">
+                                                    <Setter Property="Background" Value="#D1FAE5" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Status}" Value="Inactive">
+                                                    <Setter Property="Background" Value="#FEE2E2" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Status}" FontWeight="SemiBold" FontSize="12">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#374151" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Active">
+                                                        <Setter Property="Foreground" Value="#047857" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Inactive">
+                                                        <Setter Property="Foreground" Value="#B91C1C" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Actions" Width="180">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="Edit"
+                                            Style="{StaticResource ActionLinkButton}"
+                                            Click="EditUser_Click" />
+                                    <Button Content="{Binding ActionLabel}"
+                                            Style="{StaticResource ActionLinkButton}"
+                                            Click="ToggleStatus_Click" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
     </Grid>
 </Page>

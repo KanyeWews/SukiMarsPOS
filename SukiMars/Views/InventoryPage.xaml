@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="InventoryPage"
       Background="#FFF3F4F6">
+    <Grid>
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -40,8 +41,8 @@
                      LostFocus="SearchBox_LostFocus" />
             <Button Grid.Column="2" Content="Search" Click="Search_Click" />
             <Button Grid.Column="4" Content="Refresh" Click="Refresh_Click" />
-            <Button Grid.Column="6" Content="Delete" Background="#DC2626" Foreground="White" BorderBrush="#DC2626" Click="Delete_Click" />
-            <TextBlock x:Name="InventoryMessageText" Grid.Column="8" VerticalAlignment="Center" Foreground="#B91C1C" />
+            <TextBlock x:Name="InventoryMessageText" Grid.Column="6" VerticalAlignment="Center" Foreground="#B91C1C" />
+            <Button Grid.Column="8" Content="Item Description" Padding="14,6" HorizontalAlignment="Right" Click="ItemDescription_Click" />
         </Grid>
 
         <Grid Grid.Row="2">
@@ -91,6 +92,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Product Name" Binding="{Binding ItemName}" Width="*" />
                         <DataGridTextColumn Header="Code" Binding="{Binding ItemCode}" Width="*" />
+                        <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="*" />
                         <DataGridTextColumn Header="Category" Binding="{Binding ItemCategory}" Width="*" />
                         <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="*" />
                         <DataGridTextColumn Header="Stock" Binding="{Binding CurrentQty}" Width="*" />
@@ -146,13 +148,15 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Product Name" FontWeight="SemiBold" Margin="0,0,8,6" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="Code / SKU" FontWeight="SemiBold" Margin="0,0,8,6" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Category" FontWeight="SemiBold" Margin="0,0,8,6" />
-                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Price" FontWeight="SemiBold" Margin="0,0,8,6" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Barcode" FontWeight="SemiBold" Margin="0,0,8,6" />
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Category" FontWeight="SemiBold" Margin="0,0,8,6" />
+                        <TextBlock Grid.Row="0" Grid.Column="4" Text="Price" FontWeight="SemiBold" Margin="0,0,8,6" />
 
                         <TextBox x:Name="NameInput" Grid.Row="1" Grid.Column="0" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: Coke 1L" />
                         <TextBox x:Name="CodeInput" Grid.Row="1" Grid.Column="1" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: BEV-COKE-1L" />
-                        <TextBox x:Name="CategoryInput" Grid.Row="1" Grid.Column="2" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: Beverages" />
-                        <TextBox x:Name="PriceInput" Grid.Row="1" Grid.Column="3" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: 55.00" />
+                        <TextBox x:Name="BarcodeInput" Grid.Row="1" Grid.Column="2" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: 4800016123456" />
+                        <TextBox x:Name="CategoryInput" Grid.Row="1" Grid.Column="3" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: Beverages" />
+                        <TextBox x:Name="PriceInput" Grid.Row="1" Grid.Column="4" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: 55.00" />
 
                         <Button Grid.Row="1" Grid.Column="5" Content="+ Add Product" Padding="14,6" Click="Add_Click" />
                         <Button Grid.Row="1" Grid.Column="7" Content="Update Selected" Padding="14,6" Click="Update_Click" />
@@ -167,5 +171,34 @@
                 </Border>
             </Grid>
         </Grid>
+    </Grid>
+
+    <!-- Item Description modal overlay (full-screen) -->
+    <Grid x:Name="DescriptionOverlay" Visibility="Collapsed">
+        <Border Background="#80000000" />
+        <Border Background="White" CornerRadius="10" Padding="24"
+                Width="420" VerticalAlignment="Center" HorizontalAlignment="Center"
+                BorderBrush="#D1D5DB" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="16" Opacity="0.25" ShadowDepth="4" />
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="Item Description" FontSize="18" FontWeight="Bold" Margin="0,0,0,6" />
+                <TextBlock x:Name="DescriptionProductName" FontSize="13" Foreground="#6B7280" Margin="0,0,0,12" />
+                <TextBox x:Name="DescriptionInput"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         Height="150"
+                         FontSize="13"
+                         Padding="8"
+                         Margin="0,0,0,16" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancel" Padding="16,6" Margin="0,0,10,0" Click="DescriptionCancel_Click" />
+                    <Button Content="Save" Padding="16,6" Background="#0B6B3C" Foreground="White" Click="DescriptionSave_Click" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
     </Grid>
 </Page>

@@ -40,6 +40,11 @@
                         Height="42"
                         Margin="0,0,0,8"
                         Click="ReportsButton_Click" />
+                <Button x:Name="WarehouseButton"
+                        Content="Warehouse"
+                        Height="42"
+                        Margin="0,0,0,8"
+                        Click="WarehouseButton_Click" />
                 <Button x:Name="UsersButton"
                         Content="User Management"
                         Height="42"
