@@ -24,24 +24,15 @@ namespace SukiMars.Views
         private async void NewOrderPage_Loaded(object? sender, RoutedEventArgs e)
         {
             await LoadLookupsAsync();
-            await LoadProcessedOrdersAsync();
             EstDeliveryDate.SelectedDate = DateTime.Today.AddDays(7);
         }
 
         private async Task LoadLookupsAsync()
         {
-            var suppliers = await _warehouseService.GetSuppliersAsync();
-            SupplierCombo.ItemsSource = suppliers;
-
             var products = await _warehouseService.GetProductsLookupAsync();
             SkuCombo.ItemsSource = products;
         }
 
-        private async Task LoadProcessedOrdersAsync()
-        {
-            var processed = await _warehouseService.GetProcessedOrderItemsAsync();
-            ProcessedOrdersGrid.ItemsSource = processed;
-        }
 
         private void AddItem_Click(object sender, RoutedEventArgs e)
         {
@@ -96,9 +87,9 @@ namespace SukiMars.Views
 
         private async void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
-            if (SupplierCombo.SelectedItem == null)
+            if (string.IsNullOrWhiteSpace(SupplierNameInput.Text))
             {
-                MessageBox.Show("Select a supplier.", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Enter a supplier name.", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -108,15 +99,15 @@ namespace SukiMars.Views
                 return;
             }
 
-            var supplier = SupplierCombo.SelectedItem as Supplier;
-            int? supplierId = supplier?.SupplierID;
+            string supplierName = SupplierNameInput.Text.Trim();
+            string supplierContact = SupplierContactInput.Text.Trim();
             DateTime est = EstDeliveryDate.SelectedDate ?? DateTime.Today.AddDays(7);
 
-            var details = _currentItems.Select(i => new WarehouseShipmentDetail { ItemId = i.ItemId, Quantity = i.Quantity }).ToList();
+            var details = _currentItems.Select(i => new WarehouseShipmentDetail { ItemId = i.ItemId, OrderedQuantity = i.Quantity }).ToList();
 
             try
             {
-                int createdInventoryId = await _warehouseService.CreateShipmentAsync(supplierId, CommentsBox.Text?.Trim(), est, details, _user?.UserId, _user?.FullName);
+                int createdInventoryId = await _warehouseService.CreateShipmentAsync(supplierName, supplierContact, CommentsBox.Text?.Trim(), est, details, _user?.UserId, _user?.FullName);
                 MessageBox.Show("Order processed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 NavigationService?.Navigate(new WarehousePage(_user));

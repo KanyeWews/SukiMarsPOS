@@ -1,7 +1,11 @@
 using System.Globalization;
+using System.IO;
+using System.Printing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Microsoft.Win32;
 using SukiMars.Services;
 
 namespace SukiMars.Views
@@ -10,6 +14,7 @@ namespace SukiMars.Views
     {
         private readonly InventoryService _inventoryService = new();
         private InventoryProduct? _selectedProduct;
+        private InventoryProduct? _viewProduct;
         private const string SearchPlaceholder = "Search product...";
 
         public InventoryPage()
@@ -25,31 +30,33 @@ namespace SukiMars.Views
                 SearchBox.Text = SearchPlaceholder;
                 SearchBox.Foreground = Brushes.Gray;
             }
-
             await LoadDataAsync();
         }
 
         private string GetSearchText()
         {
             var txt = SearchBox.Text ?? string.Empty;
-            if (string.Equals(txt, SearchPlaceholder, System.StringComparison.Ordinal))
-                return string.Empty;
-            return txt.Trim();
+            return string.Equals(txt, SearchPlaceholder, StringComparison.Ordinal)
+                ? string.Empty : txt.Trim();
         }
+
+        private List<InventoryProduct> _allProducts = new();
 
         private async Task LoadDataAsync(string? search = null)
         {
             try
             {
-                List<InventoryProduct> products = await _inventoryService.GetProductsAsync(search ?? GetSearchText());
-                InventorySummary summary = await _inventoryService.GetSummaryAsync();
+                _allProducts = await _inventoryService.GetProductsAsync(search ?? GetSearchText());
+                var summary = await _inventoryService.GetSummaryAsync();
 
-                InventoryGrid.ItemsSource = products;
                 TotalProductsText.Text = summary.TotalProducts.ToString();
                 LowStockText.Text = summary.LowStock.ToString();
                 OutOfStockText.Text = summary.OutOfStock.ToString();
                 CategoriesText.Text = summary.Categories.ToString();
                 InventoryMessageText.Text = string.Empty;
+
+                PopulateCategoryFilter();
+                ApplyFilters();
             }
             catch (Exception ex)
             {
@@ -57,190 +64,346 @@ namespace SukiMars.Views
             }
         }
 
-        private async void Search_Click(object sender, RoutedEventArgs e)
+        private void PopulateCategoryFilter()
         {
-            await LoadDataAsync(GetSearchText());
+            // Preserve selected category
+            string selectedCategory = (FilterCategory.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Categories";
+            
+            FilterCategory.Items.Clear();
+            var allItem = new ComboBoxItem { Content = "All Categories" };
+            FilterCategory.Items.Add(allItem);
+
+            var categories = _allProducts
+                .Select(p => p.ItemCategory)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
+            ComboBoxItem? itemToSelect = selectedCategory == "All Categories" ? allItem : null;
+
+            foreach (var cat in categories)
+            {
+                var cbi = new ComboBoxItem { Content = cat };
+                FilterCategory.Items.Add(cbi);
+                if (cat == selectedCategory) itemToSelect = cbi;
+            }
+
+            FilterCategory.SelectedItem = itemToSelect ?? allItem;
         }
+
+        private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            if (_allProducts == null) return;
+
+            var filtered = _allProducts.AsEnumerable();
+
+            // ROP Filter
+            string ropFilter = (FilterROP?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All ROP";
+            if (ropFilter != "All ROP")
+            {
+                filtered = filtered.Where(p => p.ReorderLevel == ropFilter);
+            }
+
+            // Product Type Filter
+            string typeFilter = (FilterProductType?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Types";
+            if (typeFilter != "All Types")
+            {
+                filtered = filtered.Where(p => p.ProductType == typeFilter);
+            }
+
+            // Category Filter
+            string catFilter = (FilterCategory?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All Categories";
+            if (catFilter != "All Categories")
+            {
+                filtered = filtered.Where(p => p.ItemCategory == catFilter);
+            }
+
+            if (InventoryGrid != null)
+            {
+                InventoryGrid.ItemsSource = filtered.ToList();
+            }
+        }
+
+
+        private async void Search_Click(object sender, RoutedEventArgs e) =>
+            await LoadDataAsync(GetSearchText());
 
         private async void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            SearchBox.Text = string.Empty;
             _selectedProduct = null;
-            ClearInputs();
-
-            if (string.IsNullOrWhiteSpace(SearchBox.Text))
-            {
-                SearchBox.Text = SearchPlaceholder;
-                SearchBox.Foreground = Brushes.Gray;
-            }
-
+            SearchBox.Text = SearchPlaceholder;
+            SearchBox.Foreground = Brushes.Gray;
             await LoadDataAsync();
         }
 
-        private async void Add_Click(object sender, RoutedEventArgs e)
+        // ── ADD PRODUCT ──────────────────────────────────────────────────────
+        private void AddProductModal_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryGetInputs(out string itemName, out string itemCode, out string barcode, out string category, out decimal price, out int qty))
+            _selectedProduct = null;
+            ModalTitle.Text = "Add Product";
+            ClearModalInputs();
+            ProductModalOverlay.Visibility = Visibility.Visible;
+        }
+
+        // ── EDIT PRODUCT ─────────────────────────────────────────────────────
+        private void EditProduct_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { DataContext: InventoryProduct product })
             {
+                _selectedProduct = product;
+                ModalTitle.Text = "Update Product";
+
+                ModalNameInput.Text = product.ItemName;
+                ModalCodeInput.Text = product.ItemCode;
+                ModalCategoryInput.Text = product.ItemCategory;
+                ModalProductTypeInput.Text = product.ProductType;
+                ModalPriceInput.Text = product.Price.ToString("0.00", CultureInfo.InvariantCulture);
+                ModalDescriptionInput.Text = product.ItemDescription;
+                ModalShelfLifeInput.Text = product.ShelfLifeDays?.ToString() ?? string.Empty;
+
+                ProductModalOverlay.Visibility = Visibility.Visible;
+            }
+        }
+
+        // ── VIEW PRODUCT ─────────────────────────────────────────────────────
+        private void ViewProduct_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { DataContext: InventoryProduct product })
+            {
+                _viewProduct = product;
+
+                // Populate detail labels
+                ViewNameText.Text = product.ItemName;
+                ViewCodeText.Text = product.ItemCode;
+                ViewCategoryText.Text = product.ItemCategory;
+                ViewPriceText.Text = $"₱{product.Price:N2}";
+                ViewStockText.Text = product.CurrentQty.ToString();
+                ViewTypeText.Text = product.ProductType;
+                ViewExpiryText.Text = product.ExpirationDateDisplay;
+                ViewShelfText.Text = product.ShelfLifeDays.HasValue ? $"{product.ShelfLifeDays} days" : "N/A";
+                ViewStatusText.Text = product.Status;
+                ViewDescText.Text = product.ItemDescription;
+
+                // Generate barcode from SKU
+                GenerateViewBarcode(product.ItemCode);
+
+                ViewModalOverlay.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void GenerateViewBarcode(string sku)
+        {
+            if (string.IsNullOrWhiteSpace(sku))
+            {
+                ViewBarcodeImage.Source = null;
+                ViewBarcodeValueText.Text = string.Empty;
                 return;
             }
+            try
+            {
+                ViewBarcodeImage.Source = Code128Generator.Generate(sku, 440, 80);
+                ViewBarcodeValueText.Text = sku;
+            }
+            catch
+            {
+                ViewBarcodeImage.Source = null;
+                ViewBarcodeValueText.Text = "(barcode unavailable)";
+            }
+        }
+
+        private void ViewModalClose_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModalOverlay.Visibility = Visibility.Collapsed;
+            _viewProduct = null;
+        }
+
+        private void ViewPrintBarcode_Click(object sender, RoutedEventArgs e)
+        {
+            string sku = _viewProduct?.ItemCode ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(sku)) return;
+            PrintBarcodeVisual(sku, _viewProduct?.ItemName ?? sku);
+        }
+
+        private void ViewSaveBarcode_Click(object sender, RoutedEventArgs e)
+        {
+            string sku = _viewProduct?.ItemCode ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(sku)) return;
+            SaveBarcodePng(sku);
+        }
+
+        // ── SAVE (ADD / UPDATE) ───────────────────────────────────────────────
+        private async void ModalSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryGetModalInputs(out string itemName, out string itemCode,
+                    out string category, out decimal price,
+                    out string description, out string productType, out int? shelfLifeDays))
+                return;
+
+            // Barcode is always the SKU
+            string barcode = itemCode;
 
             try
             {
-                await _inventoryService.AddProductAsync(itemName, itemCode, category, price, 0, barcode);
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkGreen;
-                InventoryMessageText.Text = "Product added.";
-                ClearInputs();
+                if (_selectedProduct == null)
+                {
+                    await _inventoryService.AddProductAsync(itemName, itemCode, category, price, 0, barcode, description, productType, shelfLifeDays);
+                    InventoryMessageText.Foreground = Brushes.DarkGreen;
+                    InventoryMessageText.Text = "Product added.";
+                }
+                else
+                {
+                    int qty = _selectedProduct.CurrentQty;
+                    await _inventoryService.UpdateProductAsync(_selectedProduct.ItemId, itemName, itemCode, category, price, qty, barcode, description, productType, shelfLifeDays);
+                    InventoryMessageText.Foreground = Brushes.DarkGreen;
+                    InventoryMessageText.Text = "Product updated.";
+                }
+
+                ProductModalOverlay.Visibility = Visibility.Collapsed;
+                ClearModalInputs();
                 await LoadDataAsync();
             }
             catch (Exception ex)
             {
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkRed;
+                InventoryMessageText.Foreground = Brushes.DarkRed;
                 InventoryMessageText.Text = ex.Message;
             }
         }
 
-        private async void Update_Click(object sender, RoutedEventArgs e)
+        private void ModalCancel_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedProduct is null)
-            {
-                InventoryMessageText.Text = "Select a product first.";
-                return;
-            }
-
-            if (!TryGetInputs(out string itemName, out string itemCode, out string barcode, out string category, out decimal price, out int qty))
-            {
-                return;
-            }
-
-            try
-            {
-                int qtyToPreserve = _selectedProduct.CurrentQty;
-                await _inventoryService.UpdateProductAsync(_selectedProduct.ItemId, itemName, itemCode, category, price, qtyToPreserve, barcode);
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkGreen;
-                InventoryMessageText.Text = "Product updated.";
-                await LoadDataAsync();
-            }
-            catch (Exception ex)
-            {
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkRed;
-                InventoryMessageText.Text = ex.Message;
-            }
+            ProductModalOverlay.Visibility = Visibility.Collapsed;
+            ClearModalInputs();
         }
 
-        private async void Delete_Click(object sender, RoutedEventArgs e)
+        // ── HELPERS ───────────────────────────────────────────────────────────
+        private void ClearModalInputs()
         {
-            if (_selectedProduct is null)
-            {
-                InventoryMessageText.Text = "Select a product to delete.";
-                return;
-            }
-
-            try
-            {
-                await _inventoryService.DeleteProductAsync(_selectedProduct.ItemId);
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkGreen;
-                InventoryMessageText.Text = "Product deleted.";
-                _selectedProduct = null;
-                ClearInputs();
-                await LoadDataAsync();
-            }
-            catch (Exception ex)
-            {
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkRed;
-                InventoryMessageText.Text = $"Delete failed: {ex.Message}";
-            }
+            ModalNameInput.Text = string.Empty;
+            ModalCodeInput.Text = string.Empty;
+            ModalCategoryInput.Text = string.Empty;
+            ModalProductTypeInput.SelectedIndex = 0;
+            ModalPriceInput.Text = string.Empty;
+            ModalDescriptionInput.Text = string.Empty;
+            ModalShelfLifeInput.Text = string.Empty;
         }
 
-        private void InventoryGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private bool TryGetModalInputs(out string itemName, out string itemCode,
+            out string category, out decimal price,
+            out string description, out string productType, out int? shelfLifeDays)
         {
-            _selectedProduct = InventoryGrid.SelectedItem as InventoryProduct;
-            if (_selectedProduct is null)
-            {
-                return;
-            }
-
-            NameInput.Text = _selectedProduct.ItemName;
-            CodeInput.Text = _selectedProduct.ItemCode;
-            BarcodeInput.Text = _selectedProduct.Barcode;
-            CategoryInput.Text = _selectedProduct.ItemCategory;
-            PriceInput.Text = _selectedProduct.Price.ToString("0.00", CultureInfo.InvariantCulture);
-        }
-
-        private bool TryGetInputs(out string itemName, out string itemCode, out string barcode, out string category, out decimal price, out int qty)
-        {
-            itemName = NameInput.Text.Trim();
-            itemCode = CodeInput.Text.Trim();
-            barcode = BarcodeInput.Text.Trim();
-            category = CategoryInput.Text.Trim();
+            itemName = ModalNameInput.Text.Trim();
+            itemCode = ModalCodeInput.Text.Trim();
+            category = ModalCategoryInput.Text.Trim();
+            productType = ModalProductTypeInput.Text;
+            description = ModalDescriptionInput.Text.Trim();
             price = 0m;
-            qty = 0;
+            shelfLifeDays = null;
 
             if (string.IsNullOrWhiteSpace(itemName) || string.IsNullOrWhiteSpace(itemCode))
             {
-                InventoryMessageText.Text = "Product name and code are required.";
+                MessageBox.Show("Product name and code are required.", "Validation",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return false;
             }
 
-            if (!decimal.TryParse(PriceInput.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out price))
+            if (!decimal.TryParse(ModalPriceInput.Text.Trim(), NumberStyles.Any,
+                    CultureInfo.InvariantCulture, out price))
             {
-                InventoryMessageText.Text = "Invalid price.";
+                MessageBox.Show("Invalid price.", "Validation",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return false;
             }
+            
+            if (productType == "Perishable")
+            {
+                if (!string.IsNullOrWhiteSpace(ModalShelfLifeInput.Text) && int.TryParse(ModalShelfLifeInput.Text.Trim(), out int parsedShelf))
+                {
+                    shelfLifeDays = parsedShelf;
+                }
+                else
+                {
+                    MessageBox.Show("Valid Shelf Life (Days) is recommended for perishable goods.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // Decide if we should return false to block saving, or allow it. I will allow it but they might need it.
+                }
+            }
 
-            InventoryMessageText.Text = string.Empty;
             return true;
         }
 
-        private void ClearInputs()
+        // ── BARCODE PRINT / SAVE ──────────────────────────────────────────────
+        private void PrintBarcodeVisual(string sku, string label)
         {
-            NameInput.Text = string.Empty;
-            CodeInput.Text = string.Empty;
-            BarcodeInput.Text = string.Empty;
-            CategoryInput.Text = string.Empty;
-            PriceInput.Text = string.Empty;
-        }
-
-        private void ItemDescription_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedProduct is null)
-            {
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkRed;
-                InventoryMessageText.Text = "Select a product first.";
-                return;
-            }
-
-            DescriptionProductName.Text = _selectedProduct.ItemName;
-            DescriptionInput.Text = _selectedProduct.ItemDescription;
-            DescriptionOverlay.Visibility = Visibility.Visible;
-        }
-
-        private async void DescriptionSave_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedProduct is null) return;
-
             try
             {
-                await _inventoryService.UpdateDescriptionAsync(_selectedProduct.ItemId, DescriptionInput.Text.Trim());
-                DescriptionOverlay.Visibility = Visibility.Collapsed;
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkGreen;
-                InventoryMessageText.Text = "Description updated.";
-                await LoadDataAsync();
+                BitmapSource img = Code128Generator.Generate(sku, 500, 100);
+                var dlg = new PrintDialog();
+                if (dlg.ShowDialog() != true) return;
+
+                var sp = new StackPanel { Width = dlg.PrintableAreaWidth, Margin = new Thickness(40) };
+                sp.Children.Add(new TextBlock
+                {
+                    Text = label,
+                    FontSize = 16, FontWeight = FontWeights.SemiBold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 10)
+                });
+                sp.Children.Add(new System.Windows.Controls.Image
+                {
+                    Source = img, Height = 120,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Stretch = Stretch.Uniform
+                });
+                sp.Children.Add(new TextBlock
+                {
+                    Text = sku, FontSize = 13,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 6, 0, 0)
+                });
+
+                sp.Measure(new System.Windows.Size(dlg.PrintableAreaWidth, dlg.PrintableAreaHeight));
+                sp.Arrange(new Rect(new System.Windows.Size(dlg.PrintableAreaWidth, dlg.PrintableAreaHeight)));
+                sp.UpdateLayout();
+                dlg.PrintVisual(sp, $"Barcode - {sku}");
             }
             catch (Exception ex)
             {
-                InventoryMessageText.Foreground = System.Windows.Media.Brushes.DarkRed;
-                InventoryMessageText.Text = ex.Message;
+                MessageBox.Show($"Print error: {ex.Message}", "Print",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void DescriptionCancel_Click(object sender, RoutedEventArgs e)
+        private void SaveBarcodePng(string sku)
         {
-            DescriptionOverlay.Visibility = Visibility.Collapsed;
+            try
+            {
+                var dlg = new SaveFileDialog
+                {
+                    Title = "Save Barcode",
+                    Filter = "PNG Image|*.png",
+                    FileName = $"barcode_{sku}.png"
+                };
+                if (dlg.ShowDialog() != true) return;
+                Code128Generator.SaveToPng(sku, dlg.FileName, 500, 100);
+                MessageBox.Show($"Barcode saved to:\n{dlg.FileName}", "Saved",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Save error: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
+        // ── SEARCH BOX PLACEHOLDER BEHAVIOUR ─────────────────────────────────
         private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            if (string.Equals(SearchBox.Text, SearchPlaceholder, System.StringComparison.Ordinal))
+            if (string.Equals(SearchBox.Text, SearchPlaceholder, StringComparison.Ordinal))
             {
                 SearchBox.Text = string.Empty;
                 SearchBox.Foreground = Brushes.Black;

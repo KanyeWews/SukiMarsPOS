@@ -185,6 +185,8 @@ namespace SukiMars.Views
             }
         }
 
+
+
         private void RenderChart(
             List<PosService.SalesPoint> points,
             List<PosService.SalesPoint> monthlyPoints,

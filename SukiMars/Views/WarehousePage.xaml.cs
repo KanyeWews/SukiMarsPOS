@@ -16,6 +16,7 @@ namespace SukiMars.Views
         private List<WarehouseShipment> _allShipments = new();
         private string? _activeStatusChip;
         private WarehouseShipment? _editingShipment;
+        private List<ShipmentBatchItem> _receivingItems = new();
         private const string SearchPlaceholder = "Search ASN or supplier...";
 
         public WarehousePage(UserSession? user = null)
@@ -30,7 +31,7 @@ namespace SukiMars.Views
             SearchBox.Text = SearchPlaceholder;
             SearchBox.Foreground = Brushes.Gray;
 
-            StatusFilter.ItemsSource = new[] { "All Status", "Pending", "Ordered", "Delivered", "Cancelled" };
+            StatusFilter.ItemsSource = new[] { "All Status", "Pending", "Ordered", "Received", "Cancelled" };
             StatusFilter.SelectedIndex = 0;
 
             DeliveryDateFilter.SelectedDate = null;
@@ -119,13 +120,13 @@ namespace SukiMars.Views
             AllStatusChip.Content = $"All ({_allShipments.Count})";
             PendingChip.Content = $"Pending ({Count("Pending")})";
             OrderedChip.Content = $"Ordered ({Count("Ordered")})";
-            DeliveredChip.Content = $"Delivered ({Count("Delivered")})";
+            ReceivedChip.Content = $"Received ({Count("Received")})";
             CancelledChip.Content = $"Cancelled ({Count("Cancelled")})";
 
             SetChipSelected(AllStatusChip, _activeStatusChip is null or "All");
             SetChipSelected(PendingChip, _activeStatusChip == "Pending");
             SetChipSelected(OrderedChip, _activeStatusChip == "Ordered");
-            SetChipSelected(DeliveredChip, _activeStatusChip == "Delivered");
+            SetChipSelected(ReceivedChip, _activeStatusChip == "Received");
             SetChipSelected(CancelledChip, _activeStatusChip == "Cancelled");
 
             _ = visible;
@@ -144,7 +145,7 @@ namespace SukiMars.Views
             {
                 "Pending" => new SolidColorBrush(Color.FromRgb(0xB4, 0x53, 0x09)),
                 "Ordered" => new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
-                "Delivered" => new SolidColorBrush(Color.FromRgb(0x6D, 0x28, 0xD9)),
+                "Received" => new SolidColorBrush(Color.FromRgb(0x6D, 0x28, 0xD9)),
                 "Cancelled" => new SolidColorBrush(Color.FromRgb(0xB9, 0x1C, 0x1C)),
                 _ => Brushes.Transparent
             };
@@ -191,16 +192,27 @@ namespace SukiMars.Views
             NavigationService?.Navigate(new NewOrderPage(_user));
         }
 
-        private void View_Click(object sender, RoutedEventArgs e)
+        private async void View_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button { DataContext: WarehouseShipment shipment })
             {
-                MessageBox.Show(
-                    $"ASN: {shipment.ASNNumber}\nSupplier: {shipment.Supplier}\nStatus: {shipment.Status}\nEst. Delivery: {shipment.EstimatedDeliveryDate:MMM d, yyyy}",
-                    "View Shipment",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                try
+                {
+                    var items = await _warehouseService.GetShipmentItemsAsync(shipment.InventoryId);
+                    ViewBatchASN.Text = $"ASN: {shipment.ASNNumber} · Supplier: {shipment.Supplier} · Status: {shipment.Status}";
+                    ViewBatchGrid.ItemsSource = items;
+                    ViewBatchOverlay.Visibility = Visibility.Visible;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Unable to load items: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
+        }
+
+        private void ViewBatchClose_Click(object sender, RoutedEventArgs e)
+        {
+            ViewBatchOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void Edit_Click(object sender, RoutedEventArgs e)
@@ -210,7 +222,7 @@ namespace SukiMars.Views
                 _editingShipment = shipment;
                 StatusOverlayASN.Text = $"ASN: {shipment.ASNNumber}";
                 StatusOverlayCurrent.Text = $"Current Status: {shipment.Status}";
-                StatusOverlayCombo.ItemsSource = new[] { "Pending", "Ordered", "Delivered", "Cancelled" };
+                StatusOverlayCombo.ItemsSource = new[] { "Pending", "Ordered", "Received", "Cancelled" };
                 StatusOverlayCombo.SelectedItem = shipment.Status;
                 StatusOverlay.Visibility = Visibility.Visible;
             }
@@ -221,19 +233,18 @@ namespace SukiMars.Views
             if (_editingShipment is null || StatusOverlayCombo.SelectedItem is not string newStatus)
                 return;
 
+            // If Received, open the expiration capture modal instead
+            if (newStatus.Equals("Received", StringComparison.OrdinalIgnoreCase))
+            {
+                StatusOverlay.Visibility = Visibility.Collapsed;
+                await OpenReceiveModalAsync(_editingShipment);
+                return;
+            }
+
             try
             {
                 string updatedBy = _user?.FullName ?? "system";
-
-                if (newStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase))
-                {
-                    await _warehouseService.ReceiveShipmentAsync(_editingShipment.InventoryId, updatedBy);
-                }
-                else
-                {
-                    await _warehouseService.UpdateShipmentStatusAsync(_editingShipment.InventoryId, newStatus, updatedBy);
-                }
-
+                await _warehouseService.UpdateShipmentStatusAsync(_editingShipment.InventoryId, newStatus, updatedBy);
                 StatusOverlay.Visibility = Visibility.Collapsed;
                 _editingShipment = null;
                 await LoadDataAsync();
@@ -242,6 +253,120 @@ namespace SukiMars.Views
             {
                 MessageBox.Show($"Failed to update status: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private async Task OpenReceiveModalAsync(WarehouseShipment shipment)
+        {
+            try
+            {
+                _receivingItems = await _warehouseService.GetShipmentItemsAsync(shipment.InventoryId);
+                ReceiveOverlayASN.Text = $"ASN: {shipment.ASNNumber} · Supplier: {shipment.Supplier}";
+                ReceiveBatchList.ItemsSource = _receivingItems;
+                ReceiveOverlay.Visibility = Visibility.Visible;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to load items: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void ReceiveConfirm_Click(object sender, RoutedEventArgs e)
+        {
+            if (_editingShipment is null) return;
+
+            var batchDetails = new List<ReceiveBatchDetail>();
+
+            foreach (var item in _receivingItems)
+            {
+                // Find the Received Qty TextBox tagged with this item's InventoryDetailId
+                int occurrence = 0;
+                var recvBox = FindTaggedControlInternal<TextBox>(ReceiveBatchList, item.InventoryDetailId, ref occurrence, 0);
+
+                if (!int.TryParse(recvBox?.Text?.Trim(), out int receivedQty) || receivedQty < 0)
+                {
+                    MessageBox.Show($"Please enter a valid Received Qty for '{item.ItemName}'.", "Validation",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                DateTime? expDate = null;
+                if (item.IsPerishable)
+                {
+                    int dpOccurrence = 0;
+                    var expPicker = FindTaggedControlInternal<DatePicker>(ReceiveBatchList, item.InventoryDetailId, ref dpOccurrence, 0);
+                    if (expPicker?.SelectedDate == null)
+                    {
+                        MessageBox.Show($"Please enter an Expiration Date for '{item.ItemName}'.", "Validation",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    expDate = expPicker.SelectedDate;
+                }
+
+                batchDetails.Add(new ReceiveBatchDetail
+                {
+                    InventoryDetailId = item.InventoryDetailId,
+                    ReceivedQuantity  = receivedQty,
+                    ExpirationDate    = expDate
+                });
+            }
+
+            try
+            {
+                string updatedBy = _user?.FullName ?? "system";
+                await _warehouseService.ReceiveShipmentAsync(_editingShipment.InventoryId, updatedBy, batchDetails);
+                ReceiveOverlay.Visibility = Visibility.Collapsed;
+                _editingShipment = null;
+                _receivingItems.Clear();
+                await LoadDataAsync();
+                MessageBox.Show("Delivery confirmed and stock updated.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to receive shipment: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ReceiveCancel_Click(object sender, RoutedEventArgs e)
+        {
+            ReceiveOverlay.Visibility = Visibility.Collapsed;
+            _editingShipment = null;
+            _receivingItems.Clear();
+        }
+
+        // Helper: find a tagged control of type T within an ItemsControl
+        private static T? FindTaggedControl<T>(DependencyObject parent, int tag, int occurrence) where T : FrameworkElement
+        {
+            int found = 0;
+            return FindTaggedControlInternal<T>(parent, tag, ref found, occurrence);
+        }
+
+        private static T? FindTaggedControlInternal<T>(DependencyObject parent, int tag, ref int found, int occurrence) where T : FrameworkElement
+        {
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is T ctrl && ctrl.Tag is int t && t == tag)
+                {
+                    if (found == occurrence) return ctrl;
+                    found++;
+                }
+                var result = FindTaggedControlInternal<T>(child, tag, ref found, occurrence);
+                if (result != null) return result;
+            }
+            return null;
+        }
+
+        private static T? GetDescendant<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is T t) return t;
+                var result = GetDescendant<T>(child);
+                if (result != null) return result;
+            }
+            return null;
         }
 
         private void StatusCancel_Click(object sender, RoutedEventArgs e)

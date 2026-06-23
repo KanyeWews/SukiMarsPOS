@@ -57,18 +57,29 @@ public sealed class PosService
             : "1=1";
 
         string query = $"""
+            WITH ProductStock AS (
+                SELECT 
+                    mi.itemID,
+                    mi.itemName,
+                    mi.itemCode,
+                    mi.itemCategory,
+                    mi.price,
+                    ISNULL(mi.barcode, '') AS barcode,
+                    ISNULL((SELECT SUM(currentQty) FROM dbo.stock WHERE itemID = mi.itemID), 0) AS currentQty
+                FROM dbo.mart_items mi
+            )
             SELECT
-                mi.itemID,
-                mi.itemName,
-                mi.itemCode,
-                mi.itemCategory,
-                mi.price,
-                ISNULL(s.currentQty, 0) AS currentQty,
-                ISNULL(mi.barcode, '') AS barcode
-            FROM dbo.mart_items mi
-            LEFT JOIN dbo.stock s ON s.itemID = mi.itemID
+                itemID,
+                itemName,
+                itemCode,
+                itemCategory,
+                price,
+                currentQty,
+                barcode
+            FROM ProductStock mi
             WHERE ({categoryFilter})
               AND (@search IS NULL OR @search = '' OR mi.itemName LIKE '%' + @search + '%' OR mi.itemCode LIKE '%' + @search + '%' OR mi.barcode LIKE '%' + @search + '%')
+              AND currentQty > 0
             ORDER BY mi.itemName ASC
             """;
 
@@ -99,7 +110,7 @@ public sealed class PosService
         return products;
     }
 
-    public async Task<int> CreateTransactionAsync(int userId, string paymentMethod, IEnumerable<PosCartItem> cartItems, string? referenceNumber = null)
+    public async Task<int> CreateTransactionAsync(int userId, string paymentMethod, IEnumerable<PosCartItem> cartItems, string? referenceNumber = null, decimal discountAmount = 0m, string? discountType = null)
     {
         List<PosCartItem> items = cartItems.ToList();
         if (items.Count == 0)
@@ -109,11 +120,11 @@ public sealed class PosService
 
         decimal subtotal = items.Sum(i => i.LineTotal);
         int totalItems = items.Sum(i => i.Quantity);
-        decimal discount = 0m;
-        // totalAmount includes 12% VAT
-        decimal totalAmount = decimal.Round(subtotal * 1.12m - discount, 2);
-        decimal vatableSales = decimal.Round(totalAmount / 1.12m, 2);
-        decimal vat = decimal.Round(totalAmount - vatableSales, 2);
+        
+        // Prices are VAT-inclusive; compute VAT components
+        decimal totalAmount  = decimal.Round(subtotal - discountAmount, 2);
+        decimal vat          = decimal.Round(totalAmount * 0.12m, 2);
+        decimal vatableSales = decimal.Round(totalAmount - vat, 2);
 
         await using SqlConnection connection = new(DatabaseConfig.ConnectionString);
         await connection.OpenAsync();
@@ -127,6 +138,7 @@ public sealed class PosService
                 (
                     transDateTime,
                     discountAmount,
+                    discountType,
                     totalItem,
                     totalAmount,
                     VATableSales,
@@ -140,6 +152,7 @@ public sealed class PosService
                 (
                     GETDATE(),
                     @discountAmount,
+                    @discountType,
                     @totalItem,
                     @totalAmount,
                     @vatableSales,
@@ -155,7 +168,8 @@ public sealed class PosService
             int transactionId;
             await using (SqlCommand header = new(insertHeaderSql, connection, transaction))
             {
-                header.Parameters.AddWithValue("@discountAmount", discount);
+                header.Parameters.AddWithValue("@discountAmount", discountAmount);
+                header.Parameters.AddWithValue("@discountType", string.IsNullOrWhiteSpace(discountType) || discountType == "None" ? DBNull.Value : discountType);
                 header.Parameters.AddWithValue("@totalItem", totalItems);
                 header.Parameters.AddWithValue("@totalAmount", totalAmount);
                 header.Parameters.AddWithValue("@vatableSales", decimal.Round(vatableSales, 2));
@@ -171,13 +185,6 @@ public sealed class PosService
                 INSERT INTO dbo.transaction_details (transactionID, itemID, qty, unitPrice, total)
                 VALUES (@transactionID, @itemID, @qty, @unitPrice, @total)
                 """;
-            const string updateStockSql = """
-                UPDATE dbo.stock
-                SET currentQty = currentQty - @qty,
-                    lastUpdated = GETDATE()
-                WHERE itemID = @itemID
-                """;
-
             foreach (PosCartItem item in items)
             {
                 await using SqlCommand detail = new(insertDetailSql, connection, transaction);
@@ -188,10 +195,65 @@ public sealed class PosService
                 detail.Parameters.AddWithValue("@total", item.LineTotal);
                 await detail.ExecuteNonQueryAsync();
 
-                await using SqlCommand stock = new(updateStockSql, connection, transaction);
-                stock.Parameters.AddWithValue("@itemID", item.ItemId);
-                stock.Parameters.AddWithValue("@qty", item.Quantity);
-                await stock.ExecuteNonQueryAsync();
+                // Deduct stock using FEFO (First-Expired, First-Out)
+                int remainingToDeduct = item.Quantity;
+                
+                const string fetchStockSql = """
+                    SELECT s.stockID, s.currentQty
+                    FROM dbo.stock s
+                    LEFT JOIN dbo.inventory_details id ON s.inventoryDetailsID = id.inventoryDetailsID
+                    WHERE s.itemID = @itemID AND s.currentQty > 0
+                    ORDER BY 
+                        CASE WHEN id.ExpirationDate IS NULL THEN 1 ELSE 0 END, 
+                        id.ExpirationDate ASC, 
+                        s.stockID ASC
+                    """;
+                
+                var availableBatches = new List<(int StockId, int CurrentQty)>();
+                await using (SqlCommand fetchStock = new(fetchStockSql, connection, transaction))
+                {
+                    fetchStock.Parameters.AddWithValue("@itemID", item.ItemId);
+                    await using SqlDataReader reader = await fetchStock.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        availableBatches.Add((reader.GetInt32(0), reader.GetInt32(1)));
+                    }
+                }
+
+                foreach (var batch in availableBatches)
+                {
+                    if (remainingToDeduct <= 0) break;
+
+                    int deductFromBatch = Math.Min(batch.CurrentQty, remainingToDeduct);
+                    
+                    const string deductSql = "UPDATE dbo.stock SET currentQty = currentQty - @qty, lastUpdated = GETDATE() WHERE stockID = @stockID";
+                    await using (SqlCommand deductCmd = new(deductSql, connection, transaction))
+                    {
+                        deductCmd.Parameters.AddWithValue("@qty", deductFromBatch);
+                        deductCmd.Parameters.AddWithValue("@stockID", batch.StockId);
+                        await deductCmd.ExecuteNonQueryAsync();
+                    }
+
+                    remainingToDeduct -= deductFromBatch;
+                }
+                
+                // If oversold (no stock rows had enough), deduct the remaining from the last known batch or create a negative entry
+                if (remainingToDeduct > 0 && availableBatches.Count > 0)
+                {
+                    const string forceDeductSql = "UPDATE dbo.stock SET currentQty = currentQty - @qty, lastUpdated = GETDATE() WHERE stockID = @stockID";
+                    await using SqlCommand forceCmd = new(forceDeductSql, connection, transaction);
+                    forceCmd.Parameters.AddWithValue("@qty", remainingToDeduct);
+                    forceCmd.Parameters.AddWithValue("@stockID", availableBatches.Last().StockId);
+                    await forceCmd.ExecuteNonQueryAsync();
+                }
+                else if (remainingToDeduct > 0)
+                {
+                    const string insertNegSql = "INSERT INTO dbo.stock (itemID, currentQty, lastUpdated) VALUES (@itemID, -@qty, GETDATE())";
+                    await using SqlCommand insertNegCmd = new(insertNegSql, connection, transaction);
+                    insertNegCmd.Parameters.AddWithValue("@itemID", item.ItemId);
+                    insertNegCmd.Parameters.AddWithValue("@qty", remainingToDeduct);
+                    await insertNegCmd.ExecuteNonQueryAsync();
+                }
             }
 
             await transaction.CommitAsync();
@@ -664,7 +726,7 @@ public sealed class PosProduct
     }
 }
 
-internal static class Code128Generator
+public static class Code128Generator
 {
     private static readonly int[][] Patterns =
     {
@@ -742,6 +804,16 @@ internal static class Code128Generator
         rtb.Render(visual);
         rtb.Freeze();
         return rtb;
+    }
+
+    public static string SaveToPng(string data, string outputPath, int width = 400, int height = 100)
+    {
+        BitmapSource src = Generate(data, width, height);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(src));
+        using var fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create);
+        encoder.Save(fs);
+        return outputPath;
     }
 }
 

@@ -91,13 +91,18 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="14" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Supplier" FontWeight="SemiBold" FontSize="12" Foreground="#374151" Margin="0,0,0,6" />
-                                <ComboBox x:Name="SupplierCombo" Height="36" FontSize="13"
-                                          VerticalContentAlignment="Center" DisplayMemberPath="SupplierName" />
+                                <TextBlock Text="Supplier Name" FontWeight="SemiBold" FontSize="12" Foreground="#374151" Margin="0,0,0,6" />
+                                <TextBox x:Name="SupplierNameInput" Height="36" FontSize="13" VerticalContentAlignment="Center" />
                             </StackPanel>
                             <StackPanel Grid.Column="2">
+                                <TextBlock Text="Contact" FontWeight="SemiBold" FontSize="12" Foreground="#374151" Margin="0,0,0,6" />
+                                <TextBox x:Name="SupplierContactInput" Height="36" FontSize="13" VerticalContentAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
                                 <TextBlock Text="Est. Delivery Date" FontWeight="SemiBold" FontSize="12" Foreground="#374151" Margin="0,0,0,6" />
                                 <DatePicker x:Name="EstDeliveryDate" Height="36" FontSize="13"
                                             VerticalContentAlignment="Center" />
@@ -116,6 +121,10 @@
                         </Grid.RowDefinitions>
                         <TextBlock Text="Add Items" FontSize="16" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
                         <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="10" />
@@ -123,7 +132,11 @@
                                 <ColumnDefinition Width="10" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ComboBox x:Name="SkuCombo" Grid.Column="0" Height="36" FontSize="13"
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Select Item" FontWeight="SemiBold" FontSize="12" Foreground="#374151" Margin="0,0,0,6" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Qty" FontWeight="SemiBold" FontSize="12" Foreground="#374151" Margin="0,0,0,6" />
+
+                            <ComboBox x:Name="SkuCombo" Grid.Row="1" Grid.Column="0" Height="36" FontSize="13"
                                       VerticalContentAlignment="Center" SelectedValuePath="ItemId">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
@@ -135,9 +148,9 @@
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
-                            <TextBox x:Name="QtyInput" Grid.Column="2" Height="36" FontSize="13"
+                            <TextBox x:Name="QtyInput" Grid.Row="1" Grid.Column="2" Height="36" FontSize="13"
                                      VerticalContentAlignment="Center" ToolTip="Quantity" />
-                            <Button Grid.Column="4" Content="+ Add" Padding="16,0" Height="36"
+                            <Button Grid.Row="1" Grid.Column="4" Content="+ Add" Padding="16,0" Height="36"
                                     Background="#0B6B3C" Foreground="White" FontWeight="SemiBold"
                                     BorderThickness="0" Cursor="Hand" Click="AddItem_Click" />
                         </Grid>
@@ -155,31 +168,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Processed Orders (Recent) -->
-                <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="18"
-                        BorderBrush="#E5E7EB" BorderThickness="1">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Recent Orders" FontSize="16" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,12" />
-                        <DataGrid x:Name="ProcessedOrdersGrid" Grid.Row="1"
-                                  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                                  HeadersVisibility="Column" GridLinesVisibility="None"
-                                  Background="White" BorderThickness="0" RowHeaderWidth="0"
-                                  RowHeight="42" ColumnHeaderHeight="40">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="ASN" Binding="{Binding ASNNumber}" Width="120" />
-                                <DataGridTextColumn Header="Item" Binding="{Binding ItemName}" Width="*" />
-                                <DataGridTextColumn Header="SKU" Binding="{Binding ItemCode}" Width="120" />
-                                <DataGridTextColumn Header="Qty" Binding="{Binding Quantity}" Width="60" />
-                                <DataGridTextColumn Header="Supplier" Binding="{Binding Supplier}" Width="140" />
-                                <DataGridTextColumn Header="Est. Delivery" Binding="{Binding EstimatedDeliveryDate, StringFormat='{}{0:MMM d, yyyy}'}" Width="120" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Grid>
-                </Border>
             </Grid>
 
             <!-- RIGHT: Current Order summary -->

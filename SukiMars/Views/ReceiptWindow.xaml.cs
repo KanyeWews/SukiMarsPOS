@@ -8,7 +8,7 @@ namespace SukiMars.Views
 {
     public partial class ReceiptWindow : Window
     {
-        public ReceiptWindow(int transactionId, List<PosCartItem> items, decimal subTotal, decimal vatableSales, decimal vat, decimal totalAmount, string paymentMethod, decimal amountReceived, decimal change, string referenceNumber)
+        public ReceiptWindow(int transactionId, List<PosCartItem> items, decimal subTotal, decimal vatableSales, decimal vat, decimal totalAmount, string paymentMethod, decimal amountReceived, decimal change, string referenceNumber, decimal discountAmount = 0m, string? discountType = null)
         {
             InitializeComponent();
 
@@ -20,6 +20,15 @@ namespace SukiMars.Views
 
             // populate totals (right-aligned in XAML)
             SubTotalText.Text = subTotal.ToString("N2", CultureInfo.InvariantCulture);
+            
+            if (discountAmount > 0)
+            {
+                DiscountLabelText.Visibility = Visibility.Visible;
+                DiscountValueText.Visibility = Visibility.Visible;
+                DiscountLabelText.Text = $"Discount ({discountType})";
+                DiscountValueText.Text = $"-{discountAmount.ToString("N2", CultureInfo.InvariantCulture)}";
+            }
+            
             VatableText.Text = vatableSales.ToString("N2", CultureInfo.InvariantCulture);
             VatText.Text = vat.ToString("N2", CultureInfo.InvariantCulture);
             TotalText.Text = totalAmount.ToString("N2", CultureInfo.InvariantCulture);

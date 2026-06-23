@@ -224,15 +224,47 @@ namespace SukiMars.Views
             }
         }
 
+        private decimal GetCurrentDiscount(decimal subtotal)
+        {
+            if (DiscountTypeDropdown?.SelectedItem is ComboBoxItem item && item.Content != null)
+            {
+                string type = item.Content.ToString() ?? "None";
+                if (type == "PWD" || type == "Senior Citizen")
+                {
+                    return decimal.Round(subtotal * 0.05m, 2);
+                }
+            }
+            return 0m;
+        }
+
+        private void DiscountTypeDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SubtotalText == null) return;
+            UpdateCartUi();
+        }
+
         private void UpdateCartUi()
         {
             TransactionItemsList.ItemsSource = null;
             TransactionItemsList.ItemsSource = _cart;
             decimal subtotal = _cart.Sum(x => x.LineTotal);
-            // total includes 12% VAT
-            decimal total = decimal.Round(subtotal * 1.12m, 2);
+            
+            decimal discount = GetCurrentDiscount(subtotal);
+            decimal total = decimal.Round(subtotal - discount, 2);
+
             SubtotalText.Text = $"Subtotal: {subtotal:N2}";
             TotalText.Text = $"Total: {total:N2}";
+
+            if (discount > 0)
+            {
+                DiscountAmountText.Visibility = Visibility.Visible;
+                DiscountAmountText.Text = $"Discount: -{discount:N2}";
+            }
+            else
+            {
+                DiscountAmountText.Visibility = Visibility.Collapsed;
+                DiscountAmountText.Text = "Discount: 0.00";
+            }
 
             // update change display whenever totals change
             UpdateChangeDisplay();
@@ -246,12 +278,22 @@ namespace SukiMars.Views
                 return;
             }
 
-            // total payable includes 12% VAT
-            decimal total = decimal.Round(_cart.Sum(i => i.LineTotal) * 1.12m, 2);
+            decimal subtotal = _cart.Sum(i => i.LineTotal);
+            decimal discount = GetCurrentDiscount(subtotal);
+            decimal total = decimal.Round(subtotal - discount, 2);
+
             if (decimal.TryParse(AmountReceivedInput.Text.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal received))
             {
-                decimal change = received - total;
-                ChangeText.Text = change >= 0 ? $"Change: {change:N2}" : $"Short: {Math.Abs(change):N2}";
+                if (received >= total)
+                {
+                    ChangeText.Foreground = System.Windows.Media.Brushes.DarkGreen;
+                    ChangeText.Text = $"Change: {(received - total):N2}";
+                }
+                else
+                {
+                    ChangeText.Foreground = System.Windows.Media.Brushes.DarkRed;
+                    ChangeText.Text = "Insufficient amount";
+                }
             }
             else
             {
@@ -445,11 +487,17 @@ namespace SukiMars.Views
             {
                 List<PosCartItem> items = _cart.ToList();
                 decimal subtotal = items.Sum(i => i.LineTotal);
-                decimal discount = 0m;
-                // totalAmount includes 12% VAT
-                decimal totalAmount = decimal.Round(subtotal * 1.12m - discount, 2);
-                decimal vatableSales = decimal.Round(totalAmount / 1.12m, 2);
-                decimal vat = decimal.Round(totalAmount - vatableSales, 2);
+                
+                string discountType = "None";
+                if (DiscountTypeDropdown?.SelectedItem is ComboBoxItem item && item.Content != null)
+                {
+                    discountType = item.Content.ToString() ?? "None";
+                }
+                
+                decimal discountAmount = GetCurrentDiscount(subtotal);
+                decimal totalAmount = decimal.Round(subtotal - discountAmount, 2);
+                decimal vat = decimal.Round(totalAmount * 0.12m, 2);
+                decimal vatableSales = totalAmount - vat;
 
                 decimal amountReceived = totalAmount;
                 decimal change = 0m;
@@ -484,10 +532,13 @@ namespace SukiMars.Views
                 }
 
                 // create transaction in DB
-                int transactionId = await _pos_service.CreateTransactionAsync(_user.UserId, _selectedPaymentMethod, items, referenceNumber);
+                int transactionId = await _pos_service.CreateTransactionAsync(_user.UserId, _selectedPaymentMethod, items, referenceNumber, discountAmount, discountType);
 
                 // clear cart and refresh UI
                 _cart.Clear();
+                AmountReceivedInput.Text = string.Empty;
+                ReferenceNumberInput.Text = string.Empty;
+                if (DiscountTypeDropdown != null) DiscountTypeDropdown.SelectedIndex = 0;
                 UpdateCartUi();
                 await LoadProductsAsync();
 
@@ -505,7 +556,9 @@ namespace SukiMars.Views
                     paymentMethod: _selectedPaymentMethod,
                     amountReceived: decimal.Round(amountReceived, 2),
                     change: decimal.Round(change, 2),
-                    referenceNumber: referenceNumber
+                    referenceNumber: referenceNumber,
+                    discountAmount: discountAmount,
+                    discountType: discountType
                 );
 
                 receiptWindow.Owner = Window.GetWindow(this);

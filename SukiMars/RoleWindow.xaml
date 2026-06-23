@@ -35,11 +35,6 @@
                         Height="42"
                         Margin="0,0,0,8"
                         Click="InventoryButton_Click" />
-                <Button x:Name="ReportsButton"
-                        Content="Analytical Report"
-                        Height="42"
-                        Margin="0,0,0,8"
-                        Click="ReportsButton_Click" />
                 <Button x:Name="WarehouseButton"
                         Content="Warehouse"
                         Height="42"
@@ -48,8 +43,13 @@
                 <Button x:Name="UsersButton"
                         Content="User Management"
                         Height="42"
-                        Margin="0,0,0,20"
+                        Margin="0,0,0,8"
                         Click="UsersButton_Click" />
+                <Button x:Name="ReportsButton"
+                        Content="Analytical Report"
+                        Height="42"
+                        Margin="0,0,0,20"
+                        Click="ReportsButton_Click" />
 
                 <Button Content="Log Out"
                         Height="42"

@@ -77,6 +77,7 @@
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/> <!-- Sub-total -->
+                    <RowDefinition Height="Auto"/> <!-- Discount -->
                     <RowDefinition Height="Auto"/> <!-- VATable Sales -->
                     <RowDefinition Height="Auto"/> <!-- VAT -->
                     <RowDefinition Height="Auto"/> <!-- Amount Received -->
@@ -87,20 +88,23 @@
                 <TextBlock Text="Sub-total" Grid.Row="0" Grid.Column="0" FontWeight="SemiBold"/>
                 <TextBlock x:Name="SubTotalText" Grid.Row="0" Grid.Column="1" TextAlignment="Right" FontWeight="SemiBold"/>
 
-                <TextBlock Text="VATable Sales (12%)" Grid.Row="1" Grid.Column="0" Margin="0,6,0,0"/>
-                <TextBlock x:Name="VatableText" Grid.Row="1" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+                <TextBlock x:Name="DiscountLabelText" Text="Discount" Grid.Row="1" Grid.Column="0" Margin="0,6,0,0" Visibility="Collapsed"/>
+                <TextBlock x:Name="DiscountValueText" Grid.Row="1" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right" Foreground="#B91C1C" Visibility="Collapsed"/>
 
-                <TextBlock Text="VAT" Grid.Row="2" Grid.Column="0" Margin="0,6,0,0"/>
-                <TextBlock x:Name="VatText" Grid.Row="2" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+                <TextBlock Text="VATable Sales (12%)" Grid.Row="2" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="VatableText" Grid.Row="2" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
 
-                <TextBlock Text="Amount Received" Grid.Row="3" Grid.Column="0" Margin="0,6,0,0"/>
-                <TextBlock x:Name="AmountReceivedText" Grid.Row="3" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+                <TextBlock Text="VAT" Grid.Row="3" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="VatText" Grid.Row="3" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
 
-                <TextBlock Text="Change" Grid.Row="4" Grid.Column="0" Margin="0,6,0,0"/>
-                <TextBlock x:Name="ChangeText" Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+                <TextBlock Text="Amount Received" Grid.Row="4" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="AmountReceivedText" Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
 
-                <TextBlock Text="TOTAL" Grid.Row="5" Grid.Column="0" Margin="0,12,0,0" FontSize="14" FontWeight="Bold"/>
-                <TextBlock x:Name="TotalText" Grid.Row="5" Grid.Column="1" Margin="0,12,0,0" TextAlignment="Right" FontSize="14" FontWeight="Bold"/>
+                <TextBlock Text="Change" Grid.Row="5" Grid.Column="0" Margin="0,6,0,0"/>
+                <TextBlock x:Name="ChangeText" Grid.Row="5" Grid.Column="1" Margin="0,6,0,0" TextAlignment="Right"/>
+
+                <TextBlock Text="TOTAL" Grid.Row="6" Grid.Column="0" Margin="0,12,0,0" FontSize="14" FontWeight="Bold"/>
+                <TextBlock x:Name="TotalText" Grid.Row="6" Grid.Column="1" Margin="0,12,0,0" TextAlignment="Right" FontSize="14" FontWeight="Bold"/>
             </Grid>
 
             <!-- payment method moved to lowest section -->

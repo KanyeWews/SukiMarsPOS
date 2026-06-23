@@ -285,14 +285,14 @@
 					IsHitTestVisible="False"
 					Cursor="Arrow"
 					Tag="Ordered" />
-			<Button x:Name="DeliveredChip"
+			<Button x:Name="ReceivedChip"
 					Style="{StaticResource StatusChipButton}"
 					Background="#EDE9FE"
 					Foreground="#6D28D9"
 					IsHitTestVisible="False"
 					Cursor="Arrow"
-					Tag="Delivered" />
-	<Button x:Name="CancelledChip"
+					Tag="Received" />
+		<Button x:Name="CancelledChip"
 					Style="{StaticResource StatusChipButton}"
 					Background="#FEE2E2"
 					Foreground="#B91C1C"
@@ -369,7 +369,7 @@
 												<DataTrigger Binding="{Binding Status}" Value="Ordered">
 													<Setter Property="Background" Value="#DBEAFE" />
 												</DataTrigger>
-												<DataTrigger Binding="{Binding Status}" Value="Delivered">
+												<DataTrigger Binding="{Binding Status}" Value="Received">
 													<Setter Property="Background" Value="#EDE9FE" />
 												</DataTrigger>
 												<DataTrigger Binding="{Binding Status}" Value="Cancelled">
@@ -389,7 +389,7 @@
 													<DataTrigger Binding="{Binding Status}" Value="Ordered">
 														<Setter Property="Foreground" Value="#1D4ED8" />
 													</DataTrigger>
-													<DataTrigger Binding="{Binding Status}" Value="Delivered">
+													<DataTrigger Binding="{Binding Status}" Value="Received">
 														<Setter Property="Foreground" Value="#6D28D9" />
 													</DataTrigger>
 													<DataTrigger Binding="{Binding Status}" Value="Cancelled">
@@ -431,7 +431,7 @@
 		</Border>
 	</Grid>
 
-	<!-- Edit Status modal overlay (full-screen) -->
+	<!-- Edit Status modal overlay -->
 	<Grid x:Name="StatusOverlay" Visibility="Collapsed">
 		<Border Background="#80000000" />
 		<Border Background="White" CornerRadius="10" Padding="24"
@@ -451,6 +451,121 @@
 					<Button Content="Save" Padding="16,6" Background="#0B6B3C" Foreground="White" Click="StatusSave_Click" />
 				</StackPanel>
 			</StackPanel>
+		</Border>
+	</Grid>
+
+	<!-- Receive Delivery modal overlay -->
+	<Grid x:Name="ReceiveOverlay" Visibility="Collapsed">
+		<Border Background="#80000000" />
+		<Border Background="White" CornerRadius="10" Padding="24"
+				Width="620" MaxHeight="580" VerticalAlignment="Center" HorizontalAlignment="Center"
+				BorderBrush="#D1D5DB" BorderThickness="1">
+			<Border.Effect>
+				<DropShadowEffect BlurRadius="16" Opacity="0.25" ShadowDepth="4" />
+			</Border.Effect>
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<TextBlock Text="Confirm Delivery Receipt" FontSize="18" FontWeight="Bold" Margin="0,0,0,4" />
+				<TextBlock x:Name="ReceiveOverlayASN" Grid.Row="1" FontSize="13" Foreground="#6B7280" Margin="0,0,0,12" />
+				<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,0,0,14">
+					<ItemsControl x:Name="ReceiveBatchList">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="0,10">
+									<StackPanel>
+										<StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+											<TextBlock Text="{Binding ItemName}" FontWeight="SemiBold" FontSize="13" />
+											<TextBlock Text=" — " Foreground="#9CA3AF" FontSize="13" />
+											<TextBlock Text="{Binding ItemCode}" Foreground="#6B7280" FontSize="13" />
+											<TextBlock Text=" · Ordered: " Foreground="#9CA3AF" FontSize="13" />
+											<TextBlock Text="{Binding OrderedQuantity}" FontSize="13" FontWeight="SemiBold" />
+											<Border CornerRadius="4" Padding="6,2" Margin="10,0,0,0" Background="#DBEAFE">
+												<TextBlock Text="{Binding ProductType}" FontSize="11" Foreground="#1D4ED8" FontWeight="SemiBold"/>
+											</Border>
+										</StackPanel>
+										<!-- Received Qty (always) + Expiry (Perishable only) -->
+										<Grid>
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="10" />
+												<ColumnDefinition Width="*" />
+											</Grid.ColumnDefinitions>
+											<!-- Received Qty: always shown -->
+											<StackPanel Grid.Column="0">
+												<TextBlock Text="Received Qty *" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,4"/>
+												<TextBox Tag="{Binding InventoryDetailId}" FontSize="12" Height="32"
+														 VerticalContentAlignment="Center"
+														 Text="{Binding OrderedQuantity}" />
+											</StackPanel>
+											<!-- Expiration Date: Perishable only -->
+											<StackPanel Grid.Column="2">
+												<StackPanel.Style>
+													<Style TargetType="StackPanel">
+														<Setter Property="Visibility" Value="Collapsed"/>
+														<Style.Triggers>
+															<DataTrigger Binding="{Binding IsPerishable}" Value="True">
+																<Setter Property="Visibility" Value="Visible"/>
+															</DataTrigger>
+														</Style.Triggers>
+													</Style>
+												</StackPanel.Style>
+												<TextBlock Text="Expiration Date *" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,4"/>
+												<DatePicker Tag="{Binding InventoryDetailId}" FontSize="12" Height="32" />
+											</StackPanel>
+										</Grid>
+									</StackPanel>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</ScrollViewer>
+				<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+					<Button Content="Cancel" Padding="16,6" Margin="0,0,10,0" Click="ReceiveCancel_Click" />
+					<Button Content="Confirm Receipt" Padding="16,6" Background="#0B6B3C" Foreground="White" FontWeight="SemiBold" Click="ReceiveConfirm_Click" />
+				</StackPanel>
+			</Grid>
+		</Border>
+	</Grid>
+
+	<!-- View Batches modal overlay -->
+	<Grid x:Name="ViewBatchOverlay" Visibility="Collapsed">
+		<Border Background="#80000000" />
+		<Border Background="White" CornerRadius="10" Padding="24"
+				Width="680" MaxHeight="560" VerticalAlignment="Center" HorizontalAlignment="Center"
+				BorderBrush="#D1D5DB" BorderThickness="1">
+			<Border.Effect>
+				<DropShadowEffect BlurRadius="16" Opacity="0.25" ShadowDepth="4" />
+			</Border.Effect>
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<TextBlock Text="Shipment Details" FontSize="18" FontWeight="Bold" Margin="0,0,0,4" />
+				<TextBlock x:Name="ViewBatchASN" Grid.Row="1" FontSize="13" Foreground="#6B7280" Margin="0,0,0,12" />
+				<DataGrid x:Name="ViewBatchGrid" Grid.Row="2"
+						  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+						  HeadersVisibility="Column" GridLinesVisibility="None"
+						  Background="White" BorderThickness="0" RowHeaderWidth="0"
+						  RowHeight="40" ColumnHeaderHeight="38" Margin="0,0,0,14">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="Item"         Binding="{Binding ItemName}"        Width="*" />
+						<DataGridTextColumn Header="Type"         Binding="{Binding ProductType}"     Width="100" />
+						<DataGridTextColumn Header="Ordered Qty"  Binding="{Binding OrderedQuantity}" Width="90" />
+						<DataGridTextColumn Header="Received Qty" Binding="{Binding ReceivedQuantity}" Width="90" />
+						<DataGridTextColumn Header="Expiration"   Binding="{Binding ExpirationDisplay}" Width="120" />
+						<DataGridTextColumn Header="Shelf Status" Binding="{Binding ShelfLifeStatus}" Width="90" />
+					</DataGrid.Columns>
+				</DataGrid>
+				<Button Grid.Row="3" Content="Close" Padding="16,6" HorizontalAlignment="Right" Click="ViewBatchClose_Click" />
+			</Grid>
 		</Border>
 	</Grid>
 	</Grid>

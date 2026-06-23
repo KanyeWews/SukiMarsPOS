@@ -219,4 +219,26 @@ public sealed class AuthService
         }
         await cmd.ExecuteNonQueryAsync();
     }
+
+    // Verify a pincode against any Manager or Admin account
+    public async Task<bool> VerifyManagerPinAsync(string pin)
+    {
+        if (string.IsNullOrWhiteSpace(pin)) return false;
+
+        const string sql = """
+            SELECT COUNT(1)
+            FROM dbo.user_accounts
+            WHERE pincode = @pin
+              AND userRole IN ('Manager', 'Admin')
+              AND [status] = 'Active'
+            """;
+
+        await using SqlConnection conn = new(DatabaseConfig.ConnectionString);
+        await conn.OpenAsync();
+        await using SqlCommand cmd = new(sql, conn);
+        cmd.Parameters.AddWithValue("@pin", pin);
+        int count = (int)(await cmd.ExecuteScalarAsync() ?? 0);
+        return count > 0;
+    }
 }
+

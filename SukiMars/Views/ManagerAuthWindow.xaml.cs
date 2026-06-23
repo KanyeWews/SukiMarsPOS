@@ -19,31 +19,20 @@ namespace SukiMars.Views
         private async void Authorize_Click(object sender, RoutedEventArgs e)
         {
             AuthErrorText.Text = string.Empty;
-            string user = UsernameInput.Text?.Trim() ?? string.Empty;
-            string pass = PasswordInput.Password;
-            string pin = PincodeInput.Text?.Trim() ?? string.Empty;
+            string pin = PincodeInput.Password;
+
+            if (string.IsNullOrWhiteSpace(pin))
+            {
+                AuthErrorText.Text = "Please enter your PIN code.";
+                return;
+            }
 
             try
             {
-                var acct = await _auth.AuthenticateAsync(user, pass);
-                if (acct is null)
+                bool valid = await _auth.VerifyManagerPinAsync(pin);
+                if (!valid)
                 {
-                    AuthErrorText.Text = "Invalid username or password.";
-                    return;
-                }
-
-                // require manager role ONLY (deny Admin and Cashier)
-                if (!acct.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase))
-                {
-                    AuthErrorText.Text = "Manager credentials required.";
-                    return;
-                }
-
-                // verify pincode if present in DB
-                var details = await _auth.GetUserByIdAsync(acct.UserId);
-                if (details is null || string.IsNullOrWhiteSpace(details.Pincode) || details.Pincode != pin)
-                {
-                    AuthErrorText.Text = "Invalid pincode.";
+                    AuthErrorText.Text = "Invalid PIN. Access denied.";
                     return;
                 }
 

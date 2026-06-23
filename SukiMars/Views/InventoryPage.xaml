@@ -17,33 +17,55 @@
             </DockPanel>
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="360" />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="130" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="130" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="130" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+            <!-- Search & Actions -->
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="360" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <TextBox x:Name="SearchBox"
-                     Grid.Column="0"
-                     Height="38"
-                     FontSize="12"
-                     VerticalContentAlignment="Center"
-                     Text="Search product..."
-                     Foreground="Gray"
-                     GotFocus="SearchBox_GotFocus"
-                     LostFocus="SearchBox_LostFocus" />
-            <Button Grid.Column="2" Content="Search" Click="Search_Click" />
-            <Button Grid.Column="4" Content="Refresh" Click="Refresh_Click" />
-            <TextBlock x:Name="InventoryMessageText" Grid.Column="6" VerticalAlignment="Center" Foreground="#B91C1C" />
-            <Button Grid.Column="8" Content="Item Description" Padding="14,6" HorizontalAlignment="Right" Click="ItemDescription_Click" />
-        </Grid>
+                <TextBox x:Name="SearchBox"
+                         Grid.Column="0"
+                         Height="38"
+                         FontSize="12"
+                         VerticalContentAlignment="Center"
+                         Text="Search product..."
+                         Foreground="Gray"
+                         GotFocus="SearchBox_GotFocus"
+                         LostFocus="SearchBox_LostFocus" />
+                <Button Grid.Column="2" Content="Search" Click="Search_Click" />
+                <Button Grid.Column="4" Content="Refresh" Click="Refresh_Click" />
+                <Button Grid.Column="5" Content="+ Add Product" Padding="14,6" HorizontalAlignment="Right" Click="AddProductModal_Click" />
+            </Grid>
+            <!-- Filters -->
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Filter by:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,12,0"/>
+                
+                <ComboBox x:Name="FilterROP" Width="120" Margin="0,0,12,0" SelectionChanged="Filter_SelectionChanged">
+                    <ComboBoxItem Content="All ROP" IsSelected="True"/>
+                    <ComboBoxItem Content="Good"/>
+                    <ComboBoxItem Content="Warning"/>
+                    <ComboBoxItem Content="Critical"/>
+                </ComboBox>
+
+                <ComboBox x:Name="FilterProductType" Width="140" Margin="0,0,12,0" SelectionChanged="Filter_SelectionChanged">
+                    <ComboBoxItem Content="All Types" IsSelected="True"/>
+                    <ComboBoxItem Content="Perishable"/>
+                    <ComboBoxItem Content="Non-Perishable"/>
+                </ComboBox>
+
+                <ComboBox x:Name="FilterCategory" Width="150" Margin="0,0,12,0" SelectionChanged="Filter_SelectionChanged">
+                    <ComboBoxItem Content="All Categories" IsSelected="True"/>
+                </ComboBox>
+                
+                <TextBlock x:Name="InventoryMessageText" VerticalAlignment="Center" Foreground="#B91C1C" Margin="12,0,0,0" />
+            </StackPanel>
+        </StackPanel>
 
         <Grid Grid.Row="2">
             <Grid.RowDefinitions>
@@ -79,20 +101,13 @@
             </UniformGrid>
 
             <Grid Grid.Row="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
                 <DataGrid x:Name="InventoryGrid"
                           AutoGenerateColumns="False"
                           CanUserAddRows="False"
-                          IsReadOnly="True"
-                          SelectionChanged="InventoryGrid_SelectionChanged">
+                          IsReadOnly="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Product Name" Binding="{Binding ItemName}" Width="*" />
                         <DataGridTextColumn Header="Code" Binding="{Binding ItemCode}" Width="*" />
-                        <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="*" />
                         <DataGridTextColumn Header="Category" Binding="{Binding ItemCategory}" Width="*" />
                         <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="*" />
                         <DataGridTextColumn Header="Stock" Binding="{Binding CurrentQty}" Width="*" />
@@ -124,57 +139,35 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
+                        <DataGridTextColumn Header="Type" Binding="{Binding ProductType}" Width="*" />
+                        <DataGridTextColumn Header="Expiration Date" Binding="{Binding ExpirationDateDisplay}" Width="*" />
+                        <DataGridTextColumn Header="Shelf Life" Binding="{Binding ShelfLifeDisplay}" Width="*" />
+                        <DataGridTextColumn Header="Expiration Status" Binding="{Binding ExpirationStatus}" Width="*" />
                         <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
+
+                        <!-- View + Edit actions -->
+                        <DataGridTemplateColumn Header="Actions" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="View" Foreground="#059669" Background="Transparent"
+                                                BorderThickness="0" Cursor="Hand" Margin="0,0,8,0"
+                                                Click="ViewProduct_Click" />
+                                        <Button Content="Edit" Foreground="#2563EB" Background="Transparent"
+                                                BorderThickness="0" Cursor="Hand"
+                                                Click="EditProduct_Click" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-
-                <Border Grid.Row="1" Margin="0,10,0,0" Padding="12" CornerRadius="8" Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="1">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*" />
-                            <ColumnDefinition Width="2*" />
-                            <ColumnDefinition Width="2*" />
-                            <ColumnDefinition Width="2*" />
-                            <ColumnDefinition Width="2*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Product Name" FontWeight="SemiBold" Margin="0,0,8,6" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Code / SKU" FontWeight="SemiBold" Margin="0,0,8,6" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Barcode" FontWeight="SemiBold" Margin="0,0,8,6" />
-                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Category" FontWeight="SemiBold" Margin="0,0,8,6" />
-                        <TextBlock Grid.Row="0" Grid.Column="4" Text="Price" FontWeight="SemiBold" Margin="0,0,8,6" />
-
-                        <TextBox x:Name="NameInput" Grid.Row="1" Grid.Column="0" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: Coke 1L" />
-                        <TextBox x:Name="CodeInput" Grid.Row="1" Grid.Column="1" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: BEV-COKE-1L" />
-                        <TextBox x:Name="BarcodeInput" Grid.Row="1" Grid.Column="2" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: 4800016123456" />
-                        <TextBox x:Name="CategoryInput" Grid.Row="1" Grid.Column="3" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: Beverages" />
-                        <TextBox x:Name="PriceInput" Grid.Row="1" Grid.Column="4" Margin="0,0,8,0" Height="34" VerticalContentAlignment="Center" ToolTip="Example: 55.00" />
-
-                        <Button Grid.Row="1" Grid.Column="5" Content="+ Add Product" Padding="14,6" Click="Add_Click" />
-                        <Button Grid.Row="1" Grid.Column="7" Content="Update Selected" Padding="14,6" Click="Update_Click" />
-
-                        <TextBlock Grid.Row="2"
-                                   Grid.ColumnSpan="8"
-                                   Margin="0,8,0,0"
-                                   Foreground="#6B7280"
-                                   FontSize="12"
-                                   Text="Note: Select a row above to auto-fill these fields, then click 'Update Selected'. For new items, fill all fields then click '+ Add Product'." />
-                    </Grid>
-                </Border>
             </Grid>
         </Grid>
     </Grid>
 
-    <!-- Item Description modal overlay (full-screen) -->
-    <Grid x:Name="DescriptionOverlay" Visibility="Collapsed">
+    <!-- ===== ADD / EDIT Product Modal ===== -->
+    <Grid x:Name="ProductModalOverlay" Visibility="Collapsed">
         <Border Background="#80000000" />
         <Border Background="White" CornerRadius="10" Padding="24"
                 Width="420" VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -183,22 +176,168 @@
                 <DropShadowEffect BlurRadius="16" Opacity="0.25" ShadowDepth="4" />
             </Border.Effect>
             <StackPanel>
-                <TextBlock Text="Item Description" FontSize="18" FontWeight="Bold" Margin="0,0,0,6" />
-                <TextBlock x:Name="DescriptionProductName" FontSize="13" Foreground="#6B7280" Margin="0,0,0,12" />
-                <TextBox x:Name="DescriptionInput"
-                         AcceptsReturn="True"
-                         TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto"
-                         Height="150"
-                         FontSize="13"
-                         Padding="8"
-                         Margin="0,0,0,16" />
+                <TextBlock x:Name="ModalTitle" Text="Add Product" FontSize="18" FontWeight="Bold" Margin="0,0,0,16" />
+
+                <!-- Name + Code/SKU -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Product Name" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBox x:Name="ModalNameInput" Height="34" VerticalContentAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Code / SKU" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBox x:Name="ModalCodeInput" Height="34" VerticalContentAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Product Type + Category -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Product Type" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <ComboBox x:Name="ModalProductTypeInput" Height="34" VerticalContentAlignment="Center">
+                            <ComboBoxItem Content="Non-Perishable" IsSelected="True"/>
+                            <ComboBoxItem Content="Perishable"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Category" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBox x:Name="ModalCategoryInput" Height="34" VerticalContentAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Price + Shelf Life -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Price" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBox x:Name="ModalPriceInput" Height="34" VerticalContentAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" x:Name="ModalShelfLifePanel" Visibility="Visible">
+                        <TextBlock Text="Shelf Life (Days)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBox x:Name="ModalShelfLifeInput" Height="34" VerticalContentAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Description -->
+                <StackPanel Margin="0,0,0,16">
+                    <TextBlock Text="Description" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBox x:Name="ModalDescriptionInput" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto" Height="80" Padding="8" />
+                </StackPanel>
+
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Cancel" Padding="16,6" Margin="0,0,10,0" Click="DescriptionCancel_Click" />
-                    <Button Content="Save" Padding="16,6" Background="#0B6B3C" Foreground="White" Click="DescriptionSave_Click" />
+                    <Button Content="Cancel" Padding="16,6" Margin="0,0,10,0" Click="ModalCancel_Click" />
+                    <Button x:Name="ModalSaveBtn" Content="Save" Padding="16,6" Background="#0B6B3C" Foreground="White" Click="ModalSave_Click" />
                 </StackPanel>
             </StackPanel>
         </Border>
     </Grid>
+
+    <!-- ===== VIEW Details Modal ===== -->
+    <Grid x:Name="ViewModalOverlay" Visibility="Collapsed">
+        <Border Background="#80000000" />
+        <Border Background="White" CornerRadius="10" Padding="28"
+                Width="480" VerticalAlignment="Center" HorizontalAlignment="Center"
+                BorderBrush="#D1D5DB" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" Opacity="0.22" ShadowDepth="4" />
+            </Border.Effect>
+            <StackPanel>
+                <!-- Header -->
+                <DockPanel Margin="0,0,0,16">
+                    <TextBlock Text="Product Details" FontSize="18" FontWeight="Bold" DockPanel.Dock="Left" />
+                    <Button Content="✕" DockPanel.Dock="Right" HorizontalAlignment="Right"
+                            Background="Transparent" BorderThickness="0" FontSize="16"
+                            Foreground="#6B7280" Cursor="Hand" Click="ViewModalClose_Click" />
+                </DockPanel>
+
+                <!-- Barcode image centred at top -->
+                <Border Background="#F9FAFB" CornerRadius="8" Padding="16,12" Margin="0,0,0,16"
+                        BorderBrush="#E5E7EB" BorderThickness="1">
+                    <StackPanel>
+                        <Image x:Name="ViewBarcodeImage" Height="80" HorizontalAlignment="Center"
+                               Stretch="Uniform" Margin="0,0,0,6" />
+                        <TextBlock x:Name="ViewBarcodeValueText" FontSize="12" Foreground="#374151"
+                                   HorizontalAlignment="Center" FontFamily="Consolas" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                            <Button Content="🖨 Print Barcode" Padding="10,4" FontSize="11"
+                                    Margin="0,0,8,0" Click="ViewPrintBarcode_Click" />
+                            <Button Content="💾 Save PNG" Padding="10,4" FontSize="11"
+                                    Click="ViewSaveBarcode_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Detail rows -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Product Name" FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewNameText"   Grid.Row="0" Grid.Column="1" Padding="0,6" TextWrapping="Wrap" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Code / SKU"    FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewCodeText"   Grid.Row="1" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Category"      FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewCategoryText" Grid.Row="2" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Price"         FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewPriceText"  Grid.Row="3" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Stock"         FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewStockText"  Grid.Row="4" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Product Type"  FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewTypeText"   Grid.Row="5" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Expiry Date"   FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewExpiryText" Grid.Row="6" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Shelf Life"    FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewShelfText"  Grid.Row="7" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="8" Grid.Column="0" Text="Status"        FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" />
+                    <TextBlock x:Name="ViewStatusText" Grid.Row="8" Grid.Column="1" Padding="0,6" />
+
+                    <TextBlock Grid.Row="9" Grid.Column="0" Text="Description"   FontWeight="SemiBold" Foreground="#6B7280" Padding="0,6" VerticalAlignment="Top" />
+                    <TextBlock x:Name="ViewDescText"   Grid.Row="9" Grid.Column="1" Padding="0,6" TextWrapping="Wrap" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                    <Button Content="Close" Padding="16,6" Click="ViewModalClose_Click" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+
     </Grid>
 </Page>

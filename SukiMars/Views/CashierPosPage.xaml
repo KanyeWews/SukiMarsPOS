@@ -156,15 +156,6 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Product" Binding="{Binding ItemName}" Width="2*" />
                         <DataGridTextColumn Header="Code" Binding="{Binding ItemCode}" Width="*" />
-                        <DataGridTemplateColumn Header="Barcode" Width="200">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Image Source="{Binding BarcodeImage}" Height="35" Stretch="Uniform"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           ToolTip="{Binding Barcode}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="*" />
                         <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="*" />
                     </DataGrid.Columns>
@@ -208,6 +199,17 @@
                 </ListView>
 
                 <StackPanel Grid.Row="2" Margin="0,12,0,0">
+                    <!-- Discount Selection -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Discount:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold" />
+                        <ComboBox x:Name="DiscountTypeDropdown" Width="140" SelectionChanged="DiscountTypeDropdown_SelectionChanged">
+                            <ComboBoxItem Content="None" IsSelected="True" />
+                            <ComboBoxItem Content="PWD" />
+                            <ComboBoxItem Content="Senior Citizen" />
+                        </ComboBox>
+                    </StackPanel>
+                    <TextBlock x:Name="DiscountAmountText" Text="Discount: 0.00" Foreground="#B91C1C" Visibility="Collapsed" Margin="0,0,0,4" />
+
                     <TextBlock x:Name="SubtotalText" Text="Subtotal: 0.00" FontWeight="SemiBold" />
                     <TextBlock x:Name="TotalText" Text="Total: 0.00" FontSize="20" FontWeight="Bold" Margin="0,6,0,12" />
 
